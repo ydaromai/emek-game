@@ -18,9 +18,19 @@ export default function ProgressBar({ current, total, label }: ProgressBarProps)
         </div>
       )}
       <div className="w-full h-3 bg-deep-green/10 rounded-full overflow-hidden">
+        {/*
+          Using scaleX instead of width for the fill to avoid layout thrashing.
+          transform-origin: right — the bar grows from right to left in RTL,
+          matching the visual expectation of a progress fill in Hebrew UI.
+          The inner wrapper is sized to the full track width; scaleX shrinks
+          it visually while width: 100% keeps the layout stable.
+        */}
         <div
-          className="h-full bg-turquoise rounded-full transition-all duration-700 ease-out animate-fill-bar"
-          style={{ width: `${percentage}%` }}
+          className="h-full w-full bg-turquoise rounded-full animate-fill-bar"
+          style={{
+            transform: `scaleX(${percentage / 100})`,
+            transformOrigin: 'right',
+          }}
         />
       </div>
     </div>
