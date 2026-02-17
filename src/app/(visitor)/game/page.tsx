@@ -10,6 +10,7 @@ import ProgressBar from '@/components/ui/ProgressBar';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { fireConfetti } from '@/components/Confetti';
+import NatureParticles from '@/components/NatureParticles';
 
 const QrScanner = lazy(() => import('@/components/QrScanner'));
 
@@ -112,10 +113,13 @@ export default function GamePage() {
 
   return (
     <PageShell>
-      <div className="animate-fade-in space-y-6">
-        <h1 className="text-3xl font-bold text-deep-green text-center">החידה</h1>
+      <NatureParticles variant="water" />
+      <div className="space-y-6 relative z-10">
+        <h1 className="animate-enter-1 text-3xl font-bold text-deep-green text-center">החידה</h1>
 
-        <ProgressBar current={collectedCount} total={totalSlots} label="תחנות" />
+        <div className="animate-enter-2">
+          <ProgressBar current={collectedCount} total={totalSlots} label="תחנות" pulse />
+        </div>
 
         {/* Letter slots */}
         <Card>
