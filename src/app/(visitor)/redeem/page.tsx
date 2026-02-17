@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PageShell from '@/components/ui/PageShell';
 import Card from '@/components/ui/Card';
+import NatureParticles from '@/components/NatureParticles';
 
 const SPARKLES = [
   { top: '-8px', left: '-8px', delay: '0s', size: 8 },
@@ -57,7 +58,8 @@ export default function RedeemPage() {
 
   return (
     <PageShell className="flex flex-col items-center justify-center text-center">
-      <div className="space-y-6 w-full">
+      <NatureParticles variant="leaves" />
+      <div className="space-y-6 w-full relative z-10">
         {/* Heading with sparkle particles */}
         <div className="animate-enter-1 relative inline-block">
           <h1 className="text-3xl font-bold text-deep-green">מזל טוב!</h1>

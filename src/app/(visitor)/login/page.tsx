@@ -48,9 +48,9 @@ function LoginForm() {
 
   return (
     <PageShell>
-      <div className="animate-fade-in space-y-6">
-        <h1 className="text-3xl font-bold text-deep-green text-center">כניסה למשחק</h1>
-        <Card>
+      <div className="space-y-6">
+        <h1 className="animate-enter-1 text-3xl font-bold text-deep-green text-center">כניסה למשחק</h1>
+        <Card className="animate-enter-2">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="אימייל"
@@ -75,7 +75,7 @@ function LoginForm() {
             </Button>
           </form>
         </Card>
-        <div className="text-center space-y-2">
+        <div className="animate-enter-3 text-center space-y-2">
           <Link href="/forgot-password" className="text-turquoise font-medium underline text-sm">
             שכחתם סיסמה?
           </Link>

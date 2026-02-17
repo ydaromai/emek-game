@@ -8,6 +8,7 @@ import Card from '@/components/ui/Card';
 import ProgressBar from '@/components/ui/ProgressBar';
 import Button from '@/components/ui/Button';
 import LetterReveal from '@/components/LetterReveal';
+import NatureParticles from '@/components/NatureParticles';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -47,10 +48,11 @@ export default async function AnimalPage({ params, searchParams }: Props) {
 
   return (
     <PageShell>
-      <div className="animate-fade-in space-y-5">
+      <NatureParticles variant="mixed" />
+      <div className="space-y-5 relative z-10">
         {/* Animal image */}
         {animal.image_url && (
-          <div className="relative w-full aspect-video rounded-2xl overflow-hidden">
+          <div className="animate-enter-1 relative w-full aspect-video rounded-2xl overflow-hidden">
             <Image
               src={animal.image_url}
               alt={animal.name_he}
@@ -62,7 +64,7 @@ export default async function AnimalPage({ params, searchParams }: Props) {
         )}
 
         {/* Animal name and letter */}
-        <div className="text-center space-y-2">
+        <div className="animate-enter-2 text-center space-y-2">
           <h1 className="text-3xl font-bold text-deep-green">{animal.name_he}</h1>
           <LetterReveal letter={animal.letter} isNew={isNew} />
         </div>

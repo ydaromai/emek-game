@@ -70,9 +70,9 @@ export default function RegisterPage() {
 
   return (
     <PageShell>
-      <div className="animate-fade-in space-y-6">
-        <h1 className="text-3xl font-bold text-deep-green text-center">הרשמה למשחק</h1>
-        <Card>
+      <div className="space-y-6">
+        <h1 className="animate-enter-1 text-3xl font-bold text-deep-green text-center">הרשמה למשחק</h1>
+        <Card className="animate-enter-2">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="שם מלא"
@@ -114,7 +114,7 @@ export default function RegisterPage() {
             </Button>
           </form>
         </Card>
-        <p className="text-center text-deep-green/70">
+        <p className="animate-enter-3 text-center text-deep-green/70">
           כבר רשומים?{' '}
           <Link href="/login" className="text-turquoise font-medium underline">
             התחברו כאן
