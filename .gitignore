@@ -38,6 +38,13 @@ yarn-error.log*
 .jira-import-history.json
 jira-issue-mapping.json
 
+# claude code
+.claude/settings.local.json
+
+# playwright
+/test-results/
+/playwright-report/
+
 # vercel
 .vercel
 
