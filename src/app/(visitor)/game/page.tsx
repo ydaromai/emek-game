@@ -116,18 +116,25 @@ export default function GamePage() {
 
         {/* Letter slots */}
         <Card>
-          <div className="flex flex-wrap justify-center gap-2">
-            {slots.map((slot) => (
+          <div className="flex flex-wrap justify-center gap-2" style={{ perspective: '600px' }}>
+            {slots.map((slot, i) => (
               <div
                 key={slot.order_index}
                 className={`
                   w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold
-                  transition-all duration-300
+                  transition-transform duration-200 cursor-default relative overflow-hidden
                   ${slot.collected
-                    ? 'bg-turquoise text-white shadow-md'
-                    : 'bg-deep-green/10 text-deep-green/30'
+                    ? `bg-turquoise text-white shadow-md animate-pop-in slot-shimmer`
+                    : 'bg-deep-green/10 text-deep-green/30 animate-breathe'
                   }
                 `}
+                style={slot.collected ? { animationDelay: `${i * 80}ms` } : undefined}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'perspective(200px) rotateY(3deg) rotateX(2deg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = '';
+                }}
               >
                 {slot.collected ? slot.letter : '?'}
               </div>
