@@ -210,7 +210,7 @@ test.describe('Full game flow', () => {
     await expect(page.getByText('10 מתוך 10')).toBeVisible();
   });
 
-  test('submitting correct answer redirects to /redeem', async ({ page }) => {
+  test('submitting correct answer shows confetti and redirects to /redeem', async ({ page }) => {
     await login(page);
 
     const expectedWord = animals.map((a) => a.letter).join('');
@@ -221,6 +221,11 @@ test.describe('Full game flow', () => {
     await answerInput.fill(expectedWord);
 
     await page.getByRole('button', { name: /בדיקה/ }).click();
+
+    // Should show success message during confetti delay (2.5s)
+    await expect(page.getByText('כל הכבוד!')).toBeVisible({ timeout: 5000 });
+
+    // Then redirect to /redeem after the celebration
     await page.waitForURL('**/redeem', { timeout: 10_000 });
   });
 
@@ -379,7 +384,27 @@ test.describe('Admin flow', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. SECURITY
+// 7. REDUCED MOTION
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Reduced motion', () => {
+  test('nature particles are hidden when prefers-reduced-motion is reduce', async ({ browser }) => {
+    const context = await browser.newContext({
+      reducedMotion: 'reduce',
+    });
+    const page = await context.newPage();
+    await page.goto('/');
+
+    // Nature particles container should be hidden (display: none)
+    const particles = page.locator('.nature-particles');
+    await expect(particles).toBeHidden();
+
+    await context.close();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. SECURITY
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Security', () => {
