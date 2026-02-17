@@ -254,6 +254,19 @@ body {
   .nature-spinner {
     animation: spinLeaf 1s ease-in-out infinite;
   }
+
+  /* --- Hero scene animations --- */
+  .animate-wave {
+    animation: wave 8s ease-in-out infinite;
+  }
+
+  .animate-drift {
+    animation: drift linear infinite;
+  }
+
+  .animate-wave-underline {
+    animation: waveUnderline 3s ease-in-out infinite;
+  }
 }
 
 /* Hide nature particles when user prefers reduced motion */
@@ -310,6 +323,29 @@ body {
     pointer-events: none;
     will-change: background-position;
   }
+}
+
+/* Wave: border-radius morphing for water effect.
+   GPU-composited: border-radius is optimized by most engines. */
+@keyframes wave {
+  0%, 100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+  25%      { border-radius: 60% 40% 30% 70% / 50% 60% 40% 60%; }
+  50%      { border-radius: 30% 70% 60% 40% / 60% 30% 50% 40%; }
+  75%      { border-radius: 70% 30% 40% 60% / 40% 60% 50% 50%; }
+}
+
+/* Drift: horizontal translation for floating silhouettes.
+   GPU-composited: transform only. */
+@keyframes drift {
+  0%   { transform: translateX(-20%); }
+  100% { transform: translateX(120%); }
+}
+
+/* Wave underline: subtle width oscillation for title decoration.
+   GPU-composited: transform only. */
+@keyframes waveUnderline {
+  0%, 100% { transform: scaleX(0.8); }
+  50%      { transform: scaleX(1); }
 }
 
 /* ============================================================
