@@ -77,10 +77,12 @@ body {
 }
 
 /* Fill-bar: scaleX instead of width — eliminates layout thrashing
-   transform-origin: right (RTL) so the bar grows left-to-right visually */
+   transform-origin: right (RTL) so the bar grows left-to-right visually.
+   --fill-target is set as a CSS custom property on the element so the
+   animation ends at the correct percentage rather than always at 1. */
 @keyframes fillBar {
   from { transform: scaleX(0); }
-  to   { transform: scaleX(1); }
+  to   { transform: scaleX(var(--fill-target, 1)); }
 }
 
 /* ============================================================

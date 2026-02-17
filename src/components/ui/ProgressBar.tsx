@@ -28,9 +28,9 @@ export default function ProgressBar({ current, total, label }: ProgressBarProps)
         <div
           className="h-full w-full bg-turquoise rounded-full animate-fill-bar"
           style={{
-            transform: `scaleX(${percentage / 100})`,
+            '--fill-target': `${percentage / 100}`,
             transformOrigin: 'right',
-          }}
+          } as React.CSSProperties}
         />
       </div>
     </div>
