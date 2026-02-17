@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import Image from 'next/image';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -13,8 +14,15 @@ export default function EditAnimalPage() {
   const id = params.id as string;
 
   const [form, setForm] = useState({ name_he: '', fun_facts: '', letter: '', order_index: 1 });
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadAnimal();
@@ -30,6 +38,8 @@ export default function EditAnimalPage() {
         letter: data.letter,
         order_index: data.order_index,
       });
+      setImageUrl(data.image_url);
+      setVideoUrl(data.video_url);
     }
     setLoading(false);
   }
@@ -41,6 +51,72 @@ export default function EditAnimalPage() {
     await supabase.from('animals').update(form).eq('id', id);
     setSaving(false);
     router.push('/admin/animals');
+  }
+
+  async function handleUpload(file: File, type: 'image' | 'video') {
+    setMediaError(null);
+    const setUploading = type === 'image' ? setUploadingImage : setUploadingVideo;
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+
+    try {
+      const res = await fetch(`/api/admin/animals/${id}/media`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setMediaError(data.error || 'העלאה נכשלה');
+        return;
+      }
+
+      const data = await res.json();
+      if (type === 'image') {
+        setImageUrl(data.url);
+      } else {
+        setVideoUrl(data.url);
+      }
+    } catch {
+      setMediaError('העלאה נכשלה');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleRemove(type: 'image' | 'video') {
+    setMediaError(null);
+    const setUploading = type === 'image' ? setUploadingImage : setUploadingVideo;
+    setUploading(true);
+
+    try {
+      const res = await fetch(`/api/admin/animals/${id}/media`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setMediaError(data.error || 'מחיקה נכשלה');
+        return;
+      }
+
+      if (type === 'image') {
+        setImageUrl(null);
+        if (imageInputRef.current) imageInputRef.current.value = '';
+      } else {
+        setVideoUrl(null);
+        if (videoInputRef.current) videoInputRef.current.value = '';
+      }
+    } catch {
+      setMediaError('מחיקה נכשלה');
+    } finally {
+      setUploading(false);
+    }
   }
 
   if (loading) return <p className="text-center py-10">טוען...</p>;
@@ -67,6 +143,78 @@ export default function EditAnimalPage() {
             <Button variant="outline" type="button" onClick={() => router.back()}>ביטול</Button>
           </div>
         </form>
+      </Card>
+
+      {mediaError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+          {mediaError}
+        </div>
+      )}
+
+      <Card>
+        <h2 className="text-lg font-bold text-deep-green mb-3">תמונה</h2>
+        {imageUrl && (
+          <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-gray-100">
+            <Image src={imageUrl} alt={form.name_he} fill className="object-cover" />
+          </div>
+        )}
+        <div className="flex items-center gap-3">
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            disabled={uploadingImage}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleUpload(file, 'image');
+            }}
+            className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-deep-green/10 file:px-3 file:py-2 file:text-deep-green file:font-medium file:cursor-pointer"
+          />
+          {imageUrl && (
+            <Button
+              variant="outline"
+              type="button"
+              disabled={uploadingImage}
+              onClick={() => handleRemove('image')}
+              className="!text-red-600 !border-red-300 hover:!bg-red-50 text-sm !px-3 !py-1 !min-h-0"
+            >
+              הסרה
+            </Button>
+          )}
+        </div>
+        {uploadingImage && <p className="text-sm text-deep-green/60 mt-2">מעלה תמונה...</p>}
+      </Card>
+
+      <Card>
+        <h2 className="text-lg font-bold text-deep-green mb-3">סרטון</h2>
+        {videoUrl && (
+          <video src={videoUrl} controls preload="metadata" className="w-full rounded-xl mb-3" />
+        )}
+        <div className="flex items-center gap-3">
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept="video/*"
+            disabled={uploadingVideo}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleUpload(file, 'video');
+            }}
+            className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-deep-green/10 file:px-3 file:py-2 file:text-deep-green file:font-medium file:cursor-pointer"
+          />
+          {videoUrl && (
+            <Button
+              variant="outline"
+              type="button"
+              disabled={uploadingVideo}
+              onClick={() => handleRemove('video')}
+              className="!text-red-600 !border-red-300 hover:!bg-red-50 text-sm !px-3 !py-1 !min-h-0"
+            >
+              הסרה
+            </Button>
+          )}
+        </div>
+        {uploadingVideo && <p className="text-sm text-deep-green/60 mt-2">מעלה סרטון...</p>}
       </Card>
     </div>
   );

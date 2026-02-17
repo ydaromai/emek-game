@@ -11,22 +11,26 @@
     "test:watch": "vitest",
     "db:migrate": "echo 'Run migrations via Supabase CLI: supabase db push'",
     "db:seed": "echo 'Run seed via Supabase CLI: supabase db seed'",
-    "test:e2e": "./scripts/e2e-test.sh"
+    "test:e2e": "playwright test",
+    "test:e2e:bash": "./scripts/e2e-test.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
+    "html5-qrcode": "^2.3.8",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.3.1",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "jsdom": "^28.1.0",

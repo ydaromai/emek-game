@@ -76,3 +76,52 @@ export async function POST(
 
   return NextResponse.json({ url: publicUrl });
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', session.user.id)
+    .single();
+
+  if (!profile || profile.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const { type } = await request.json();
+
+  if (type !== 'image' && type !== 'video') {
+    return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
+  }
+
+  const bucket = type === 'image' ? 'animal-images' : 'animal-videos';
+  const urlField = type === 'image' ? 'image_url' : 'video_url';
+
+  const { data: animal } = await supabase.from('animals').select('image_url, video_url').eq('id', id).single();
+  if (animal) {
+    const oldUrl = animal[urlField];
+    if (oldUrl) {
+      const oldPath = oldUrl.split(`${bucket}/`).pop();
+      if (oldPath) {
+        const adminClient = createAdminClient();
+        await adminClient.storage.from(bucket).remove([oldPath]);
+      }
+    }
+  }
+
+  const adminClient = createAdminClient();
+  await adminClient.from('animals').update({ [urlField]: null }).eq('id', id);
+
+  return NextResponse.json({ success: true });
+}

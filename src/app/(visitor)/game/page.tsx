@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -9,6 +9,8 @@ import Card from '@/components/ui/Card';
 import ProgressBar from '@/components/ui/ProgressBar';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+
+const QrScanner = lazy(() => import('@/components/QrScanner'));
 
 interface SlotData {
   order_index: number;
@@ -24,6 +26,7 @@ export default function GamePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     loadProgress();
@@ -131,6 +134,44 @@ export default function GamePage() {
             ))}
           </div>
         </Card>
+
+        {/* Scan button + prompt */}
+        {!completed && collectedCount < totalSlots && (
+          <div className="space-y-3">
+            <Button
+              fullWidth
+              variant="secondary"
+              onClick={() => setShowScanner(true)}
+            >
+              📷 סרקו קוד QR
+            </Button>
+            <p className="text-sm text-deep-green/60 text-center">
+              {collectedCount === 0
+                ? 'גשו לאחת מ-10 התחנות בפארק וסרקו את קוד ה-QR'
+                : `נשארו עוד ${totalSlots - collectedCount} תחנות — המשיכו לסרוק!`}
+            </p>
+          </div>
+        )}
+
+        {/* QR Scanner overlay */}
+        {showScanner && (
+          <Suspense fallback={null}>
+            <QrScanner
+              onScan={(url) => {
+                setShowScanner(false);
+                // Extract the path from the URL and navigate
+                try {
+                  const parsed = new URL(url);
+                  router.push(parsed.pathname);
+                } catch {
+                  // If not a full URL, try using it directly
+                  router.push(url);
+                }
+              }}
+              onClose={() => setShowScanner(false)}
+            />
+          </Suspense>
+        )}
 
         {/* Submit area */}
         {completed ? (

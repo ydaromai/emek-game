@@ -68,6 +68,7 @@ export default function AdminLoginPage() {
               required
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="admin@example.com"
               dir="ltr"
             />
             <Input
@@ -76,6 +77,7 @@ export default function AdminLoginPage() {
               required
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
+              placeholder="הסיסמה שלכם"
             />
             {error && <p className="text-error text-sm">{error}</p>}
             <Button type="submit" fullWidth disabled={loading}>
