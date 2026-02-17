@@ -9,6 +9,7 @@ import Card from '@/components/ui/Card';
 import ProgressBar from '@/components/ui/ProgressBar';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { fireConfetti } from '@/components/Confetti';
 
 const QrScanner = lazy(() => import('@/components/QrScanner'));
 
@@ -27,6 +28,7 @@ export default function GamePage() {
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     loadProgress();
@@ -88,8 +90,9 @@ export default function GamePage() {
     const data = await res.json();
 
     if (data.correct) {
-      // Confetti will be added in TASK 10.3
-      router.push('/redeem');
+      setSuccess(true);
+      fireConfetti();
+      setTimeout(() => router.push('/redeem'), 2500);
     } else {
       setError('לא מדויק, נסו שוב!');
     }
@@ -181,7 +184,12 @@ export default function GamePage() {
         )}
 
         {/* Submit area */}
-        {completed ? (
+        {success ? (
+          <div className="text-center space-y-3 animate-pop-in">
+            <p className="text-2xl font-bold text-success">כל הכבוד!</p>
+            <p className="text-deep-green/70">מעבירים אתכם לדף הפרס...</p>
+          </div>
+        ) : completed ? (
           <div className="text-center space-y-3">
             <p className="text-lg font-semibold text-success">כל הכבוד! פתרתם את החידה!</p>
             <Link href="/redeem">
