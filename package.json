@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "echo 'Run migrations via Supabase CLI: supabase db push'",
-    "db:seed": "echo 'Run seed via Supabase CLI: supabase db seed'"
+    "db:seed": "echo 'Run seed via Supabase CLI: supabase db seed'",
+    "test:e2e": "./scripts/e2e-test.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
