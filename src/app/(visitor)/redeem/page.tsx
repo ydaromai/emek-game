@@ -6,6 +6,14 @@ import { createClient } from '@/lib/supabase/client';
 import PageShell from '@/components/ui/PageShell';
 import Card from '@/components/ui/Card';
 
+const SPARKLES = [
+  { top: '-8px', left: '-8px', delay: '0s', size: 8 },
+  { top: '-6px', right: '-6px', delay: '0.3s', size: 6 },
+  { bottom: '-8px', left: '20%', delay: '0.6s', size: 7 },
+  { bottom: '-6px', right: '15%', delay: '0.9s', size: 5 },
+  { top: '50%', left: '-10px', delay: '1.2s', size: 6 },
+] as const;
+
 export default function RedeemPage() {
   const router = useRouter();
   const [code, setCode] = useState('');
@@ -49,18 +57,38 @@ export default function RedeemPage() {
 
   return (
     <PageShell className="flex flex-col items-center justify-center text-center">
-      <div className="animate-fade-in space-y-6 w-full">
-        <h1 className="text-3xl font-bold text-deep-green">מזל טוב!</h1>
-        <p className="text-lg text-deep-green/80">פתרתם את החידה בהצלחה!</p>
+      <div className="space-y-6 w-full">
+        {/* Heading with sparkle particles */}
+        <div className="animate-enter-1 relative inline-block">
+          <h1 className="text-3xl font-bold text-deep-green">מזל טוב!</h1>
+          {SPARKLES.map((s, i) => (
+            <span
+              key={i}
+              className="animate-sparkle absolute pointer-events-none"
+              style={{
+                ...s,
+                width: s.size,
+                height: s.size,
+                animationDelay: s.delay,
+                backgroundColor: '#D4A843',
+                clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+              }}
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+        <p className="animate-enter-2 text-lg text-deep-green/80">פתרתם את החידה בהצלחה!</p>
 
-        <Card className="space-y-4">
-          <p className="text-deep-green/70">הציגו את הקוד הזה בדלפק הפרסים:</p>
+        <Card className="animate-stamp space-y-4">
+          <p className="animate-pulse-highlight text-deep-green/70 rounded-lg px-2 py-1">
+            הציגו את הקוד הזה בדלפק הפרסים:
+          </p>
           <div className="bg-sand py-4 px-6 rounded-xl">
-            <p className="text-4xl font-mono font-bold text-deep-green tracking-widest" dir="ltr">
+            <p className="golden-shimmer text-4xl font-mono font-bold tracking-widest" dir="ltr">
               {code}
             </p>
           </div>
-          <p className="text-sm text-deep-green/50">שמרו על המסך פתוח או צלמו צילום מסך</p>
+          <p className="animate-enter-4 text-sm text-deep-green/50">שמרו על המסך פתוח או צלמו צילום מסך</p>
         </Card>
       </div>
     </PageShell>

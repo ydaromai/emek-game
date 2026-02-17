@@ -137,6 +137,35 @@ body {
   100% { transform: rotate(360deg); }
 }
 
+/* Golden shimmer: background-position sweep for text-fill effect.
+   Used on redemption code for celebratory gleam. */
+@keyframes goldenShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Stamp: scale + rotate spring for QR/card entrance.
+   GPU-composited: transform only. */
+@keyframes stamp {
+  0%   { transform: scale(1.5) rotate(5deg); opacity: 0; }
+  60%  { transform: scale(0.95) rotate(-1deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Sparkle: scale pulse for star decorations around headings.
+   GPU-composited: transform + opacity only. */
+@keyframes sparkle {
+  0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
+  50%      { transform: scale(1) rotate(180deg); opacity: 1; }
+}
+
+/* Pulse highlight: subtle background color oscillation.
+   Uses background-color which is acceptable for text containers. */
+@keyframes pulseHighlight {
+  0%, 100% { background-color: transparent; }
+  50%      { background-color: rgba(77, 182, 172, 0.1); }
+}
+
 /* ============================================================
    ANIMATION UTILITY CLASSES
    All wrapped in prefers-reduced-motion: no-preference
@@ -266,6 +295,35 @@ body {
 
   .animate-wave-underline {
     animation: waveUnderline 3s ease-in-out infinite;
+  }
+
+  /* --- Redemption page celebration --- */
+  .golden-shimmer {
+    background: linear-gradient(
+      120deg,
+      #2F5D50 0%,
+      #D4A843 45%,
+      #E8D8B9 50%,
+      #D4A843 55%,
+      #2F5D50 100%
+    );
+    background-size: 200% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: goldenShimmer 3s linear infinite;
+  }
+
+  .animate-stamp {
+    animation: stamp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .animate-sparkle {
+    animation: sparkle 1.5s ease-in-out infinite;
+  }
+
+  .animate-pulse-highlight {
+    animation: pulseHighlight 2s ease-in-out infinite;
   }
 }
 
