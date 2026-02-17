@@ -120,6 +120,23 @@ body {
   100% { opacity: 0; transform: translateY(-20vh) translateX(-10px); }
 }
 
+/* Button click ripple: radial expansion from click point.
+   GPU-composited: transform + opacity only. */
+@keyframes btnRipple {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.4; }
+  100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+}
+
+/* Nature spinner: leaf rotation with slight wobble.
+   GPU-composited: transform only. */
+@keyframes spinLeaf {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(95deg); }
+  50%  { transform: rotate(180deg); }
+  75%  { transform: rotate(265deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* ============================================================
    ANIMATION UTILITY CLASSES
    All wrapped in prefers-reduced-motion: no-preference
@@ -220,6 +237,22 @@ body {
   /* --- Nature particles: floating ambient elements --- */
   .particle-float {
     animation: float linear infinite;
+  }
+
+  /* --- Button ripple effect --- */
+  .btn-ripple {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(77, 182, 172, 0.2);
+    animation: btnRipple 0.5s ease-out forwards;
+    pointer-events: none;
+  }
+
+  /* --- Nature spinner: rotating leaf --- */
+  .nature-spinner {
+    animation: spinLeaf 1s ease-in-out infinite;
   }
 }
 
