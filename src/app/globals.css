@@ -109,6 +109,17 @@ body {
   100% { opacity: 0; transform: translate(var(--scatter-tx), var(--scatter-ty)) scale(0); }
 }
 
+/* Float: vertical drift from bottom to top with slight horizontal sway.
+   Used by NatureParticles for ambient floating elements.
+   GPU-composited: transform + opacity only. */
+@keyframes float {
+  0%   { opacity: 0; transform: translateY(100vh) translateX(0); }
+  10%  { opacity: 1; }
+  50%  { transform: translateY(50vh) translateX(15px); }
+  90%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-20vh) translateX(-10px); }
+}
+
 /* ============================================================
    ANIMATION UTILITY CLASSES
    All wrapped in prefers-reduced-motion: no-preference
@@ -204,6 +215,18 @@ body {
   .letter-reveal-particle {
     opacity: 0;
     animation: scatterParticle 0.6s ease-out 1s both;
+  }
+
+  /* --- Nature particles: floating ambient elements --- */
+  .particle-float {
+    animation: float linear infinite;
+  }
+}
+
+/* Hide nature particles when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .nature-particles {
+    display: none;
   }
 }
 
