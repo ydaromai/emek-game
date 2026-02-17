@@ -254,6 +254,31 @@ body {
   }
 }
 
+/* Progress bar shimmer — diagonal white gradient sweeping across
+   the filled portion. Uses ::after pseudo-element on its own layer.
+   GPU-composited: background-position only. */
+@media (prefers-reduced-motion: no-preference) {
+  .progress-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 25%,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+    pointer-events: none;
+    will-change: background-position;
+  }
+}
+
 /* ============================================================
    BACKGROUND TEXTURE & GLOW UTILITIES
    (Not animation — always shown regardless of reduced-motion)

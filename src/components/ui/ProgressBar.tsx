@@ -1,13 +1,28 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
+
 interface ProgressBarProps {
   current: number;
   total: number;
   label?: string;
+  pulse?: boolean;
 }
 
-export default function ProgressBar({ current, total, label }: ProgressBarProps) {
+export default function ProgressBar({ current, total, label, pulse }: ProgressBarProps) {
   const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+
+  // Key-flip pattern: when pulse fires, bump the key to remount the bar
+  // and re-trigger the fill animation, giving visual feedback for progress change.
+  const [pulseKey, setPulseKey] = useState(0);
+  const prevCurrent = useRef(current);
+
+  useEffect(() => {
+    if (pulse && current !== prevCurrent.current) {
+      setPulseKey((k) => k + 1);
+      prevCurrent.current = current;
+    }
+  }, [current, pulse]);
 
   return (
     <div className="w-full">
@@ -17,16 +32,12 @@ export default function ProgressBar({ current, total, label }: ProgressBarProps)
           <span>{current} מתוך {total}</span>
         </div>
       )}
-      <div className="w-full h-3 bg-deep-green/10 rounded-full overflow-hidden">
-        {/*
-          Using scaleX instead of width for the fill to avoid layout thrashing.
-          transform-origin: right — the bar grows from right to left in RTL,
-          matching the visual expectation of a progress fill in Hebrew UI.
-          The inner wrapper is sized to the full track width; scaleX shrinks
-          it visually while width: 100% keeps the layout stable.
-        */}
+      <div
+        className={`w-full h-3 bg-deep-green/10 rounded-full overflow-hidden ${pulse && pulseKey > 0 ? 'animate-pulse-once' : ''}`}
+      >
         <div
-          className="h-full w-full bg-turquoise rounded-full animate-fill-bar"
+          key={pulseKey}
+          className="h-full w-full bg-turquoise rounded-full animate-fill-bar progress-shimmer"
           style={{
             '--fill-target': `${percentage / 100}`,
             transformOrigin: 'right',
