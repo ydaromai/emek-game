@@ -39,7 +39,13 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
       });
 
     return () => {
-      scanner.stop().catch(() => {});
+      try {
+        if (scanner.isScanning) {
+          scanner.stop().catch(() => {});
+        }
+      } catch {
+        // Scanner may not be running — safe to ignore
+      }
     };
   }, [onScan]);
 
