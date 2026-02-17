@@ -59,6 +59,16 @@ export default async function ScanPage({ params }: Props) {
     );
   }
 
+  // Check if the user has already scanned this animal
+  const { data: existingProgress } = await supabase
+    .from('user_progress')
+    .select('id')
+    .eq('user_id', session.user.id)
+    .eq('animal_id', animal.id)
+    .maybeSingle();
+
+  const isFirstVisit = !existingProgress;
+
   // Record scan (upsert — ON CONFLICT DO NOTHING)
   await supabase.from('user_progress').upsert(
     {
@@ -69,5 +79,6 @@ export default async function ScanPage({ params }: Props) {
     { onConflict: 'user_id,animal_id', ignoreDuplicates: true }
   );
 
-  redirect(`/animal/${animal.id}`);
+  // Append ?new=true on first visit to trigger the letter reveal animation
+  redirect(`/animal/${animal.id}${isFirstVisit ? '?new=true' : ''}`);
 }

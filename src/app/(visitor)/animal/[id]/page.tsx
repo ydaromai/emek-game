@@ -7,13 +7,17 @@ import PageShell from '@/components/ui/PageShell';
 import Card from '@/components/ui/Card';
 import ProgressBar from '@/components/ui/ProgressBar';
 import Button from '@/components/ui/Button';
+import LetterReveal from '@/components/LetterReveal';
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ new?: string }>;
 }
 
-export default async function AnimalPage({ params }: Props) {
+export default async function AnimalPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const resolvedSearchParams = await searchParams;
+  const isNew = resolvedSearchParams.new === 'true';
   const session = await requireAuth(`/animal/${id}`);
   const supabase = await createClient();
 
@@ -60,9 +64,7 @@ export default async function AnimalPage({ params }: Props) {
         {/* Animal name and letter */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-deep-green">{animal.name_he}</h1>
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-turquoise text-white text-3xl font-bold animate-slide-in">
-            {animal.letter}
-          </div>
+          <LetterReveal letter={animal.letter} isNew={isNew} />
         </div>
 
         {/* Video */}
