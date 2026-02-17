@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env.local
+.env.jira
+.jira-import-history.json
+jira-issue-mapping.json
+.DS_Store
+*.log
+dist/
+.vercel
