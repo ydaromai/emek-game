@@ -4,14 +4,24 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'motion/react';
 import { createClient } from '@/lib/supabase/client';
-import PageShell from '@/components/ui/PageShell';
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
-import SectionDivider from '@/components/ui/SectionDivider';
 
 const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
+
+const inputFields: ReadonlyArray<{
+  key: 'full_name' | 'phone' | 'email' | 'password';
+  type: string;
+  icon: string;
+  placeholder: string;
+  label: string;
+  dir?: 'ltr' | 'rtl';
+}> = [
+  { key: 'full_name', type: 'text', icon: '👤', placeholder: 'ישראל ישראלי', label: 'שם מלא' },
+  { key: 'phone', type: 'tel', icon: '📱', placeholder: '050-1234567', label: 'טלפון' },
+  { key: 'email', type: 'email', icon: '✉️', placeholder: 'example@email.com', label: 'אימייל', dir: 'ltr' },
+  { key: 'password', type: 'password', icon: '🔒', placeholder: 'לפחות 8 תווים', label: 'סיסמה' },
+];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -73,60 +83,71 @@ export default function RegisterPage() {
   };
 
   return (
-    <PageShell className="bg-topo-pattern">
+    <div className="bg-forest min-h-screen flex items-center justify-center p-4">
       <FloatingParticles />
-      <div className="space-y-6">
-        <SectionDivider variant="leaves" />
-        <h1 className="animate-enter-1 text-3xl font-bold text-deep-green text-center">הרשמה למשחק</h1>
-        <Card className="animate-enter-2">
+      <div className="w-full max-w-sm relative z-10 space-y-6">
+        {/* Header icon */}
+        <div className="flex justify-center">
+          <motion.div
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1a8a6e] to-[#4ecdc4] flex items-center justify-center text-3xl"
+            animate={{ rotate: [0, -10, 10, -10, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+          >
+            🌲
+          </motion.div>
+        </div>
+
+        <h1 className="text-3xl font-bold text-white text-center">הרשמה למשחק</h1>
+
+        {/* Form card */}
+        <div className="glass-card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="שם מלא"
-              type="text"
-              required
-              value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              placeholder="ישראל ישראלי"
-            />
-            <Input
-              label="טלפון"
-              type="tel"
-              required
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              placeholder="050-1234567"
-            />
-            <Input
-              label="אימייל"
-              type="email"
-              required
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="example@email.com"
-              dir="ltr"
-            />
-            <Input
-              label="סיסמה"
-              type="password"
-              required
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              placeholder="לפחות 8 תווים"
-              error={form.password.length > 0 && form.password.length < 8 ? 'הסיסמה חייבת להכיל לפחות 8 תווים' : undefined}
-            />
-            {error && <p className="text-error text-sm">{error}</p>}
-            <Button type="submit" fullWidth disabled={loading}>
-              {loading ? 'נרשמים...' : 'הרשמה'}
-            </Button>
+            {inputFields.map((field, index) => (
+              <motion.div
+                key={field.key}
+                className="relative"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + index * 0.1 }}
+              >
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4ecdc4]">
+                  {field.icon}
+                </span>
+                <input
+                  type={field.type}
+                  required
+                  value={form[field.key]}
+                  onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                  placeholder={field.placeholder}
+                  dir={field.dir}
+                  className="rounded-xl bg-[#f0f7f0] px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#4ecdc4]"
+                />
+                {field.key === 'password' && form.password.length > 0 && form.password.length < 8 && (
+                  <p className="text-red-500 text-xs mt-1">הסיסמה חייבת להכיל לפחות 8 תווים</p>
+                )}
+              </motion.div>
+            ))}
+
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-gradient w-full py-3 text-lg disabled:opacity-50"
+            >
+              {loading ? 'נרשמים...' : 'הרשמה 🌿'}
+            </button>
           </form>
-        </Card>
-        <p className="animate-enter-3 text-center text-deep-green/70">
+        </div>
+
+        {/* Login link */}
+        <p className="text-center text-white/70">
           כבר רשומים?{' '}
-          <Link href="/login" className="text-turquoise font-medium underline">
+          <Link href="/login" className="text-[#1a8a6e] font-medium underline">
             התחברו כאן
           </Link>
         </p>
       </div>
-    </PageShell>
+    </div>
   );
 }
