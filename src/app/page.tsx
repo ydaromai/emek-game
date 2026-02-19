@@ -5,8 +5,10 @@ import Button from '@/components/ui/Button';
 import NatureParticles from '@/components/NatureParticles';
 import SectionDivider from '@/components/ui/SectionDivider';
 import TipBox from '@/components/ui/TipBox';
+import { getAllSiteContent } from '@/lib/site-content';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const content = await getAllSiteContent();
   return (
     <PageShell className="flex flex-col items-center justify-center text-center">
       <NatureParticles variant="leaves" />
@@ -77,7 +79,7 @@ export default function HomePage() {
         {/* Title with wavy underline */}
         <div className="animate-enter-2">
           <h1 className="text-4xl font-bold text-deep-green leading-tight relative inline-block">
-            פארק המעיינות
+            {content.landing_title}
             <span
               className="animate-wave-underline absolute bottom-0 left-[10%] w-[80%] h-1 bg-turquoise rounded-full"
               style={{ transformOrigin: 'center' }}
@@ -86,15 +88,12 @@ export default function HomePage() {
           </h1>
         </div>
         <h2 className="animate-enter-3 text-2xl font-semibold text-turquoise">
-          מסע חיות הבר
+          {content.landing_subtitle}
         </h2>
 
         <Card className="animate-enter-4 text-right space-y-3">
           <p className="text-lg text-deep-green/80">
-            ברוכים הבאים למסע חיות הבר של פארק המעיינות!
-          </p>
-          <p className="text-deep-green/70">
-            סרקו קודי QR ב-10 תחנות, גלו חיות מדהימות, אספו אותיות ופתרו את החידה כדי לזכות בפרס!
+            {content.landing_description}
           </p>
         </Card>
         <div className="animate-enter-5 space-y-3">
