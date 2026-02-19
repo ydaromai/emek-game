@@ -8,6 +8,7 @@ import PageShell from '@/components/ui/PageShell';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import SectionDivider from '@/components/ui/SectionDivider';
 
 export default function LoginPage() {
   return (
@@ -47,8 +48,9 @@ function LoginForm() {
   };
 
   return (
-    <PageShell>
+    <PageShell className="bg-topo-pattern">
       <div className="space-y-6">
+        <SectionDivider variant="leaves" />
         <h1 className="animate-enter-1 text-3xl font-bold text-deep-green text-center">כניסה למשחק</h1>
         <Card className="animate-enter-2">
           <form onSubmit={handleSubmit} className="space-y-4">

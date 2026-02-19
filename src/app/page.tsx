@@ -3,6 +3,8 @@ import PageShell from '@/components/ui/PageShell';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import NatureParticles from '@/components/NatureParticles';
+import SectionDivider from '@/components/ui/SectionDivider';
+import TipBox from '@/components/ui/TipBox';
 
 export default function HomePage() {
   return (
@@ -10,9 +12,12 @@ export default function HomePage() {
       <NatureParticles variant="leaves" />
       <div className="space-y-6 relative z-10">
         {/* Hero scene */}
-        <div className="animate-enter-1 relative w-full h-48 rounded-2xl overflow-hidden shadow-lg">
+        <div className="animate-enter-1 relative w-full h-56 rounded-2xl overflow-hidden shadow-lg">
           {/* Sky gradient background */}
           <div className="absolute inset-0 bg-gradient-to-b from-sky-blue via-sky-blue/60 to-sand" />
+
+          {/* Animated sun */}
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-sand to-amber-200 absolute top-4 right-4 animate-breathe" aria-hidden="true" />
 
           {/* Hills */}
           <div
@@ -51,7 +56,23 @@ export default function HomePage() {
           >
             🐟
           </span>
+          <span
+            className="animate-drift absolute text-deep-green/15 text-lg"
+            style={{ top: '22%', animationDuration: '16s', animationDelay: '6s' }}
+            aria-hidden="true"
+          >
+            🦆
+          </span>
+          <span
+            className="animate-drift absolute text-turquoise/15 text-sm"
+            style={{ top: '55%', animationDuration: '20s', animationDelay: '8s' }}
+            aria-hidden="true"
+          >
+            🐢
+          </span>
         </div>
+
+        <SectionDivider variant="wave" />
 
         {/* Title with wavy underline */}
         <div className="animate-enter-2">
@@ -84,6 +105,7 @@ export default function HomePage() {
             <Button variant="outline" fullWidth>כניסה</Button>
           </Link>
         </div>
+        <TipBox icon="💡" className="animate-enter-6">טיפ: הורידו את האפליקציה למסך הבית לחוויה מיטבית</TipBox>
       </div>
     </PageShell>
   );

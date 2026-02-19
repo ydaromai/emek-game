@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import PageShell from '@/components/ui/PageShell';
 import Card from '@/components/ui/Card';
 import NatureParticles from '@/components/NatureParticles';
+import SectionDivider from '@/components/ui/SectionDivider';
 
 const SPARKLES = [
   { top: '-8px', left: '-8px', delay: '0s', size: 8 },
@@ -60,6 +61,15 @@ export default function RedeemPage() {
     <PageShell className="flex flex-col items-center justify-center text-center">
       <NatureParticles variant="leaves" />
       <div className="space-y-6 w-full relative z-10">
+        {/* Trophy badge */}
+        <div className="animate-pop-in mx-auto w-20 h-20">
+          <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="גביע" className="w-full h-full">
+            <circle cx="40" cy="40" r="38" fill="#D4A843" opacity="0.2" />
+            <circle cx="40" cy="40" r="28" fill="#D4A843" opacity="0.3" />
+            <polygon points="40,18 45,32 60,32 48,41 52,55 40,46 28,55 32,41 20,32 35,32" fill="#D4A843" />
+          </svg>
+        </div>
+
         {/* Heading with sparkle particles */}
         <div className="animate-enter-1 relative inline-block">
           <h1 className="text-3xl font-bold text-deep-green">מזל טוב!</h1>
@@ -80,6 +90,8 @@ export default function RedeemPage() {
           ))}
         </div>
         <p className="animate-enter-2 text-lg text-deep-green/80">פתרתם את החידה בהצלחה!</p>
+
+        <SectionDivider variant="wave" />
 
         <Card className="animate-stamp space-y-4">
           <p className="animate-pulse-highlight text-deep-green/70 rounded-lg px-2 py-1">
