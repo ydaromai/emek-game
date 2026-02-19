@@ -4,7 +4,7 @@ import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { createClient } from '@/lib/supabase/client';
 
 const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
@@ -28,6 +28,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({ full_name: '', phone: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,8 +90,8 @@ export default function RegisterPage() {
         {/* Header icon */}
         <div className="flex justify-center">
           <motion.div
-            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1a8a6e] to-[#4ecdc4] flex items-center justify-center text-3xl"
-            animate={{ rotate: [0, -10, 10, -10, 0] }}
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-3xl"
+            animate={prefersReducedMotion ? undefined : { rotate: [0, -10, 10, -10, 0] }}
             transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
           >
             🌲
@@ -105,30 +106,33 @@ export default function RegisterPage() {
             {inputFields.map((field, index) => (
               <motion.div
                 key={field.key}
-                className="relative"
-                initial={{ opacity: 0, y: 20 }}
+                initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 + index * 0.1 }}
               >
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4ecdc4]">
-                  {field.icon}
-                </span>
-                <input
-                  type={field.type}
-                  required
-                  value={form[field.key]}
-                  onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
-                  placeholder={field.placeholder}
-                  dir={field.dir}
-                  className="rounded-xl bg-[#f0f7f0] px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#4ecdc4]"
-                />
+                <label htmlFor={`reg-${field.key}`} className="sr-only">{field.label}</label>
+                <div className="relative">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-accent" aria-hidden="true">
+                    {field.icon}
+                  </span>
+                  <input
+                    id={`reg-${field.key}`}
+                    type={field.type}
+                    required
+                    value={form[field.key]}
+                    onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                    placeholder={field.placeholder}
+                    dir={field.dir}
+                    className="rounded-xl bg-muted px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </div>
                 {field.key === 'password' && form.password.length > 0 && form.password.length < 8 && (
-                  <p className="text-red-500 text-xs mt-1">הסיסמה חייבת להכיל לפחות 8 תווים</p>
+                  <p className="text-red-500 text-xs mt-1" role="alert">הסיסמה חייבת להכיל לפחות 8 תווים</p>
                 )}
               </motion.div>
             ))}
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && <p className="text-red-500 text-sm" role="alert">{error}</p>}
 
             <button
               type="submit"
@@ -143,7 +147,7 @@ export default function RegisterPage() {
         {/* Login link */}
         <p className="text-center text-white/70">
           כבר רשומים?{' '}
-          <Link href="/login" className="text-[#1a8a6e] font-medium underline">
+          <Link href="/login" className="text-primary font-medium underline">
             התחברו כאן
           </Link>
         </p>

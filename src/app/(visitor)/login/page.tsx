@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { createClient } from '@/lib/supabase/client';
 
 const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
@@ -21,7 +21,9 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/game';
+  const rawRedirect = searchParams.get('redirect') || '/game';
+  const redirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/game';
+  const prefersReducedMotion = useReducedMotion();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,7 +57,7 @@ function LoginForm() {
         <div className="flex justify-center">
           <motion.div
             className="relative"
-            animate={{ y: [0, -8, 0] }}
+            animate={prefersReducedMotion ? undefined : { y: [0, -8, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
             <Image
@@ -63,9 +65,9 @@ function LoginForm() {
               alt="otter mascot"
               width={96}
               height={96}
-              className="w-24 h-24 rounded-full object-cover border-[4px] border-[#4ecdc4] shadow-lg shadow-[#4ecdc4]/30"
+              className="w-24 h-24 rounded-full object-cover border-[4px] border-accent shadow-lg shadow-accent/30"
             />
-            <span className="absolute -top-2 -right-2 w-8 h-8 bg-[#f39c12] rounded-full flex items-center justify-center text-sm">
+            <span className="absolute -top-2 -right-2 w-8 h-8 bg-orange rounded-full flex items-center justify-center text-sm">
               ✨
             </span>
           </motion.div>
@@ -77,38 +79,46 @@ function LoginForm() {
         <div className="glass-card p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
-            <div className="relative">
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4ecdc4]">✉️</span>
-              <input
-                type="email"
-                required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="example@email.com"
-                dir="ltr"
-                className="rounded-xl bg-[#f0f7f0] px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#4ecdc4]"
-              />
+            <div>
+              <label htmlFor="login-email" className="sr-only">אימייל</label>
+              <div className="relative">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-accent" aria-hidden="true">✉️</span>
+                <input
+                  id="login-email"
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="example@email.com"
+                  dir="ltr"
+                  className="rounded-xl bg-muted px-4 py-3 w-full pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
             </div>
 
             {/* Password */}
-            <div className="relative">
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4ecdc4]">🔒</span>
-              <input
-                type="password"
-                required
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder="הסיסמה שלכם"
-                className="rounded-xl bg-[#f0f7f0] px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-[#4ecdc4]"
-              />
+            <div>
+              <label htmlFor="login-password" className="sr-only">סיסמה</label>
+              <div className="relative">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-accent" aria-hidden="true">🔒</span>
+                <input
+                  id="login-password"
+                  type="password"
+                  required
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="הסיסמה שלכם"
+                  className="rounded-xl bg-muted px-4 py-3 w-full pr-10 focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+              </div>
             </div>
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && <p className="text-red-500 text-sm" role="alert">{error}</p>}
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-gradient w-full py-3 text-lg disabled:opacity-50"
+              className="btn-gradient w-full py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'מתחברים...' : 'כניסה'}
             </button>
@@ -117,12 +127,12 @@ function LoginForm() {
 
         {/* Links */}
         <div className="text-center space-y-2">
-          <Link href="/forgot-password" className="text-[#4ecdc4] font-medium underline text-sm">
+          <Link href="/forgot-password" className="text-accent font-medium underline text-sm">
             שכחתם סיסמה?
           </Link>
           <p className="text-white/70">
             עדיין לא רשומים?{' '}
-            <Link href="/register" className="text-[#1a8a6e] font-medium underline">
+            <Link href="/register" className="text-primary font-medium underline">
               הירשמו כאן
             </Link>
           </p>

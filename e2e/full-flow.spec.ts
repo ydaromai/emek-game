@@ -240,7 +240,7 @@ test.describe('Full game flow', () => {
     await expect(page.getByText('מזל טוב')).toBeVisible();
 
     // Code should be 8 characters in the big display
-    const codeEl = page.locator('.text-4xl.font-mono');
+    const codeEl = page.locator('[data-testid="redemption-code"]');
     await expect(codeEl).toBeVisible();
     const code = await codeEl.textContent();
     expect(code?.trim().length).toBe(8);

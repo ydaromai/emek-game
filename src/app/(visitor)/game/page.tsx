@@ -129,7 +129,7 @@ export default function GamePage() {
     return (
       <div className="bg-forest min-h-screen">
         <div className="relative z-10 flex items-center justify-center min-h-screen px-4 py-6 max-w-lg mx-auto">
-          <p className="text-[#1a8a6e]/70 text-lg">טוען...</p>
+          <p className="text-primary/70 text-lg">טוען...</p>
         </div>
       </div>
     );
@@ -145,20 +145,20 @@ export default function GamePage() {
         <FloatingParticles />
         <div className="space-y-6 relative z-10">
           {/* Title */}
-          <h1 className="animate-enter-1 text-3xl font-bold text-[#1a8a6e] text-center">החידה</h1>
+          <h1 className="animate-enter-1 text-3xl font-bold text-primary text-center">החידה</h1>
 
           {/* Progress bar — inline implementation */}
           <div className="animate-enter-2 w-full">
             <div className="flex justify-between items-center mb-2 text-sm font-medium">
-              <span className="text-[#5a7a5a]">תחנות</span>
-              <span className="text-[#1a8a6e]">{collectedCount} מתוך {totalSlots}</span>
+              <span className="text-muted-fg">תחנות</span>
+              <span className="text-primary">{collectedCount} מתוך {totalSlots}</span>
             </div>
             <div
-              className={`w-full h-3 bg-[#e0ede0] rounded-full overflow-hidden ${pulseKey > 0 ? 'animate-pulse-once' : ''}`}
+              className={`w-full h-3 bg-muted rounded-full overflow-hidden ${pulseKey > 0 ? 'animate-pulse-once' : ''}`}
             >
               <div
                 key={pulseKey}
-                className="h-full w-full bg-gradient-to-r from-[#1a8a6e] to-[#4ecdc4] rounded-full animate-fill-bar progress-shimmer"
+                className="h-full w-full bg-gradient-to-r from-primary to-accent rounded-full animate-fill-bar progress-shimmer"
                 style={{
                   '--fill-target': `${percentage / 100}`,
                   transformOrigin: 'right',
@@ -170,12 +170,12 @@ export default function GamePage() {
           <SectionDivider variant="leaves" />
 
           {/* Progress dots */}
-          <div className="flex justify-center gap-1.5">
+          <div className="flex justify-center gap-1.5" aria-hidden="true">
             {slots.map((slot) => (
               <div
                 key={`dot-${slot.order_index}`}
                 className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
-                  slot.collected ? 'bg-[#4ecdc4]' : 'bg-[#e0ede0]'
+                  slot.collected ? 'bg-accent' : 'bg-muted'
                 }`}
               />
             ))}
@@ -188,11 +188,11 @@ export default function GamePage() {
                 <div
                   key={slot.order_index}
                   className={`
-                    w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold
+                    w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold
                     transition-transform duration-200 cursor-default relative overflow-hidden
                     ${slot.collected
-                      ? 'bg-gradient-to-br from-[#4ecdc4] to-[#1a8a6e] text-white shadow-md animate-pop-in slot-shimmer'
-                      : 'bg-[#e0ede0] text-[#b8d4b8] animate-breathe'
+                      ? 'bg-gradient-to-br from-accent to-primary text-white shadow-md animate-pop-in slot-shimmer'
+                      : 'bg-muted text-muted-fg/50 animate-breathe'
                     }
                   `}
                   style={slot.collected ? { animationDelay: `${i * 80}ms` } : undefined}
@@ -219,12 +219,12 @@ export default function GamePage() {
             <div className="space-y-3">
               <button
                 type="button"
-                className="w-full min-h-[44px] min-w-[44px] px-6 py-3 bg-gradient-to-r from-[#4ecdc4] to-[#1a8a6e] text-white font-medium text-lg rounded-xl shadow-lg shadow-[#4ecdc4]/30 transition-all duration-200 active:scale-[0.97] hover:opacity-90"
+                className="w-full min-h-[44px] min-w-[44px] px-6 py-3 btn-gradient text-lg transition-all duration-200 active:scale-[0.97] hover:opacity-90"
                 onClick={() => setShowScanner(true)}
               >
                 סרקו קוד QR 📸
               </button>
-              <p className="text-sm text-[#5a7a5a] text-center">
+              <p className="text-sm text-muted-fg text-center">
                 {collectedCount === 0
                   ? 'גשו לאחת מ-10 התחנות בפארק וסרקו את קוד ה-QR'
                   : `נשארו עוד ${totalSlots - collectedCount} תחנות — המשיכו לסרוק!`}
@@ -239,13 +239,17 @@ export default function GamePage() {
               <QrScanner
                 onScan={(url) => {
                   setShowScanner(false);
-                  // Extract the path from the URL and navigate
+                  // Extract the path from the URL and navigate — validate origin first
                   try {
                     const parsed = new URL(url);
-                    router.push(parsed.pathname);
+                    if (parsed.origin === window.location.origin) {
+                      router.push(parsed.pathname);
+                    }
                   } catch {
-                    // If not a full URL, try using it directly
-                    router.push(url);
+                    // If not a full URL, only accept paths starting with /scan/
+                    if (url.startsWith('/scan/')) {
+                      router.push(url);
+                    }
                   }
                 }}
                 onClose={() => setShowScanner(false)}
@@ -259,25 +263,26 @@ export default function GamePage() {
               {/* Success modal overlay */}
               <div
                 data-testid="success-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="success-title"
                 className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center"
               >
                 <div className="bg-white/95 rounded-3xl p-8 mx-4 max-w-sm w-full text-center space-y-3 animate-pop-in">
                   <div data-testid="success-trophy" className="text-5xl">🏆</div>
-                  <p className="text-2xl font-bold text-[#1a8a6e]">כל הכבוד!</p>
-                  <p className="text-[#5a7a5a]">מעבירים אתכם לדף הפרס...</p>
+                  <p id="success-title" className="text-2xl font-bold text-primary">כל הכבוד!</p>
+                  <p className="text-muted-fg">מעבירים אתכם לדף הפרס...</p>
                 </div>
               </div>
             </>
           ) : completed ? (
             <div className="text-center space-y-3">
-              <p className="text-lg font-semibold text-[#1a8a6e]">כל הכבוד! פתרתם את החידה!</p>
-              <Link href="/redeem">
-                <button
-                  type="button"
-                  className="w-full min-h-[44px] min-w-[44px] px-6 py-3 bg-gradient-to-r from-[#4ecdc4] to-[#1a8a6e] text-white font-medium text-lg rounded-xl shadow-lg shadow-[#4ecdc4]/30 transition-all duration-200 active:scale-[0.97] hover:opacity-90"
-                >
-                  לדף הפרס
-                </button>
+              <p className="text-lg font-semibold text-primary">כל הכבוד! פתרתם את החידה!</p>
+              <Link
+                href="/redeem"
+                className="block w-full min-h-[44px] min-w-[44px] px-6 py-3 bg-gradient-to-r from-accent to-primary text-white font-medium text-lg text-center rounded-xl shadow-lg shadow-accent/30 transition-all duration-200 active:scale-[0.97] hover:opacity-90"
+              >
+                לדף הפרס
               </Link>
             </div>
           ) : (
@@ -286,7 +291,7 @@ export default function GamePage() {
                 <div className="w-full">
                   <label
                     htmlFor="word-input"
-                    className="block text-sm font-medium text-[#1a8a6e] mb-1"
+                    className="block text-sm font-medium text-primary mb-1"
                   >
                     הכניסו את המילה
                   </label>
@@ -296,10 +301,10 @@ export default function GamePage() {
                     value={answer}
                     onChange={(e) => setAnswer(e.target.value)}
                     placeholder="הקלידו את המילה שגיליתם"
-                    className="w-full min-h-[44px] bg-[#f0f7f0] rounded-xl px-4 py-3 text-lg text-nature-text placeholder:text-[#b8d4b8] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#4ecdc4] border-none"
+                    className="w-full min-h-[44px] bg-sand rounded-xl px-4 py-3 text-lg text-nature-text placeholder:text-muted-fg/50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-accent border-none"
                   />
                 </div>
-                {error && <p className="text-error text-sm">{error}</p>}
+                {error && <p className="text-error text-sm" role="alert">{error}</p>}
                 <button
                   type="submit"
                   disabled={submitting || collectedCount === 0}

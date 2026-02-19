@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 
 interface FloatingAvatarProps {
   children: React.ReactNode;
@@ -8,10 +8,12 @@ interface FloatingAvatarProps {
 }
 
 export default function FloatingAvatar({ children, className }: FloatingAvatarProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
       className={className}
-      animate={{ y: [0, -6, 0] }}
+      animate={prefersReducedMotion ? undefined : { y: [0, -6, 0] }}
       transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
     >
       {children}

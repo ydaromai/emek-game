@@ -43,7 +43,7 @@ export default function ResetPasswordPage() {
       <FloatingParticles />
       <main className="w-full max-w-lg relative z-10">
         <div className="animate-fade-in space-y-6">
-          <h1 className="text-3xl font-bold text-[#1a8a6e] text-center">סיסמה חדשה</h1>
+          <h1 className="text-3xl font-bold text-primary text-center">סיסמה חדשה</h1>
           <div className="glass-card p-5">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="w-full">
@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="לפחות 8 תווים"
-                  className="bg-[#f0f7f0] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#4ecdc4] text-lg min-h-[44px]"
+                  className="bg-muted rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-accent text-lg min-h-[44px]"
                 />
               </div>
               <div className="w-full">
@@ -71,10 +71,10 @@ export default function ResetPasswordPage() {
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   placeholder="הקלידו שוב"
-                  className="bg-[#f0f7f0] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#4ecdc4] text-lg min-h-[44px]"
+                  className="bg-muted rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-accent text-lg min-h-[44px]"
                 />
               </div>
-              {error && <p className="text-error text-sm">{error}</p>}
+              {error && <p className="text-error text-sm" role="alert">{error}</p>}
               <button
                 type="submit"
                 disabled={loading}

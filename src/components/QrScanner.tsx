@@ -50,20 +50,8 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black flex flex-col">
-      {/* Inline keyframes for scan animations */}
-      <style>{`
-        @keyframes scanLine {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(200px); }
-        }
-        @keyframes pulseRing {
-          0%, 100% { transform: scale(1); opacity: 0.3; }
-          50% { transform: scale(1.05); opacity: 0; }
-        }
-      `}</style>
-
       {/* Header with gradient */}
-      <div className="relative bg-gradient-to-b from-[#1a2e1a] to-transparent p-5 pt-8 text-center z-10">
+      <div className="relative bg-gradient-to-b from-deep-green to-transparent p-5 pt-8 text-center z-10">
         <button
           onClick={onClose}
           className="absolute top-6 left-4 text-white text-2xl leading-none p-2"
@@ -84,8 +72,7 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
         <div className="relative w-64 h-64 z-10">
           {/* Pulse ring */}
           <div
-            className="absolute inset-0 border-2 border-[#4ecdc4] rounded-3xl"
-            style={{ animation: 'pulseRing 2s ease-in-out infinite' }}
+            className="absolute inset-0 border-2 border-accent rounded-3xl animate-pulse-ring"
           />
 
           {/* Corner brackets — top-left */}
@@ -99,8 +86,7 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
 
           {/* Scanning line */}
           <div
-            className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-[#4ecdc4] to-transparent shadow-[0_0_15px_#4ecdc4]"
-            style={{ animation: 'scanLine 2.5s ease-in-out infinite' }}
+            className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent shadow-[0_0_15px_theme(--color-accent)] animate-scan-line"
           />
         </div>
       </div>

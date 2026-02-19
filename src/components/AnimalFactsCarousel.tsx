@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Fact {
@@ -14,23 +14,34 @@ export default function AnimalFactsCarousel({ facts }: { facts: Fact[] }) {
   const [direction, setDirection] = useState(1);
   const fact = facts[idx];
 
-  const goTo = (newIdx: number) => {
+  const goTo = useCallback((newIdx: number) => {
     setDirection(newIdx > idx ? 1 : -1);
     setIdx(newIdx);
-  };
+  }, [idx]);
 
-  const prev = () => {
+  const prev = useCallback(() => {
     if (idx > 0) goTo(idx - 1);
-  };
+  }, [idx, goTo]);
 
-  const next = () => {
+  const next = useCallback(() => {
     if (idx < facts.length - 1) goTo(idx + 1);
-  };
+  }, [idx, facts.length, goTo]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowRight') prev();
+    else if (e.key === 'ArrowLeft') next();
+  }, [prev, next]);
 
   return (
-    <div className="animate-enter-3 space-y-4">
+    <div
+      className="animate-enter-3 space-y-4"
+      role="region"
+      aria-roledescription="קרוסלה"
+      aria-label="עובדות על בעל החיים"
+      onKeyDown={handleKeyDown}
+    >
       {/* Card container */}
-      <div className="relative bg-white/90 backdrop-blur-md rounded-3xl p-6 shadow-xl shadow-[#1a8a6e]/10 min-h-[220px] overflow-hidden">
+      <div className="relative glass-card p-6 min-h-[220px] overflow-hidden">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={idx}
@@ -58,7 +69,7 @@ export default function AnimalFactsCarousel({ facts }: { facts: Fact[] }) {
               aria-label="עובדה קודמת"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 4l6 6-6 6" stroke="#2F5D50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8 4l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-deep-green" />
               </svg>
             </button>
             <button
@@ -70,7 +81,7 @@ export default function AnimalFactsCarousel({ facts }: { facts: Fact[] }) {
               aria-label="עובדה הבאה"
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 4l-6 6 6 6" stroke="#2F5D50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-deep-green" />
               </svg>
             </button>
           </>
@@ -79,10 +90,12 @@ export default function AnimalFactsCarousel({ facts }: { facts: Fact[] }) {
 
       {/* Dot indicators */}
       {facts.length > 1 && (
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-center gap-2" role="tablist" aria-label="עובדות">
           {facts.map((_, i) => (
             <button
               key={i}
+              role="tab"
+              aria-selected={i === idx}
               onClick={() => goTo(i)}
               className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
                 i === idx ? 'bg-turquoise scale-110' : 'bg-deep-green/15'

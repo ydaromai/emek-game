@@ -95,15 +95,17 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="animate-enter-5 space-y-3">
-            <Link href="/register">
-              <button className="btn-gradient w-full min-h-[44px] px-6 py-3 text-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-turquoise focus:ring-offset-2 active:scale-[0.97]">
-                הרשמה למשחק
-              </button>
+            <Link
+              href="/register"
+              className="block btn-gradient w-full min-h-[44px] px-6 py-3 text-lg text-center transition-all duration-200 active:scale-[0.97]"
+            >
+              הרשמה למשחק
             </Link>
-            <Link href="/login">
-              <button className="w-full min-h-[44px] px-6 py-3 rounded-xl font-medium text-lg border-2 border-deep-green text-deep-green bg-transparent hover:bg-deep-green/5 active:bg-deep-green/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-turquoise focus:ring-offset-2 active:scale-[0.97]">
-                כניסה
-              </button>
+            <Link
+              href="/login"
+              className="block w-full min-h-[44px] px-6 py-3 rounded-xl font-medium text-lg text-center border-2 border-deep-green text-deep-green bg-transparent hover:bg-deep-green/5 active:bg-deep-green/10 transition-all duration-200 active:scale-[0.97]"
+            >
+              כניסה
             </Link>
           </div>
           <TipBox icon="💡" className="animate-enter-6">טיפ: הורידו את האפליקציה למסך הבית לחוויה מיטבית</TipBox>

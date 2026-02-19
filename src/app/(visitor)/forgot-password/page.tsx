@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
       <FloatingParticles />
       <main className="w-full max-w-lg relative z-10">
         <div className="animate-fade-in space-y-6">
-          <h1 className="text-3xl font-bold text-[#1a8a6e] text-center">שחזור סיסמה</h1>
+          <h1 className="text-3xl font-bold text-primary text-center">שחזור סיסמה</h1>
           <div className="glass-card p-5">
             {sent ? (
               <div className="text-center space-y-3 py-4">
@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     dir="ltr"
-                    className="bg-[#f0f7f0] rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-[#4ecdc4] text-lg min-h-[44px]"
+                    className="bg-muted rounded-xl px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-accent text-lg min-h-[44px]"
                   />
                 </div>
                 <button

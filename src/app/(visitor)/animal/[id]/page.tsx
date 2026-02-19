@@ -67,7 +67,7 @@ export default async function AnimalPage({ params, searchParams }: Props) {
         {/* Animal avatar + name + letter */}
         <div className="animate-enter-1 flex flex-col items-center text-center space-y-3">
           <FloatingAvatar>
-            <div className="w-20 h-20 rounded-full border-[4px] border-[#4ecdc4] shadow-lg shadow-[#4ecdc4]/30 overflow-hidden">
+            <div className="w-20 h-20 rounded-full border-[4px] border-accent shadow-lg shadow-accent/30 overflow-hidden">
               {animal.image_url ? (
                 <Image
                   src={animal.image_url}
@@ -115,20 +115,22 @@ export default async function AnimalPage({ params, searchParams }: Props) {
         {/* Continue to puzzle button */}
         <Link
           href="/game"
-          className="block w-full text-center py-4 rounded-2xl font-bold text-lg text-white bg-gradient-to-r from-[#4ecdc4] to-[#1a8a6e] shadow-lg shadow-[#1a8a6e]/25 active:scale-[0.97] transition-transform"
+          className="block w-full text-center py-4 rounded-2xl font-bold text-lg text-white bg-gradient-to-r from-accent to-primary shadow-lg shadow-primary/25 active:scale-[0.97] transition-transform"
         >
           המשיכו לחידה
         </Link>
 
         {/* Nature trail footer banner */}
-        <div className="relative h-32 rounded-2xl overflow-hidden bg-[#2d5a3d]">
+        <div className="relative h-32 rounded-2xl overflow-hidden bg-nature-dark">
           <Image
             src="https://images.unsplash.com/photo-1766012166662-906c82c18d9f?w=1080&q=75"
             alt="שביל טבע"
             fill
+            loading="lazy"
+            sizes="(max-width: 512px) 100vw, 512px"
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-l from-[#1a2e1a]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-l from-deep-green/60 to-transparent" />
           <div className="absolute inset-0 flex items-center justify-center">
             <p className="text-white text-lg font-bold drop-shadow-md">
               🌿 גלו את הטבע סביבכם
