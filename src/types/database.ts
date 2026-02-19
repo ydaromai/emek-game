@@ -23,6 +23,9 @@ export interface Animal {
   image_url: string | null
   video_url: string | null
   is_active: boolean
+  habitat: string
+  conservation_tip: string
+  illustration_key: string
   created_at: string
   updated_at: string
 }
@@ -42,4 +45,12 @@ export interface Redemption {
   redeemed: boolean
   redeemed_at: string | null
   created_at: string
+}
+
+export interface SiteContent {
+  id: string
+  content_key: string
+  content_value: string
+  description: string
+  updated_at: string
 }
