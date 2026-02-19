@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import PageShell from '@/components/ui/PageShell';
-import Card from '@/components/ui/Card';
+import FloatingParticles from '@/components/FloatingParticles';
 
 interface Props {
   params: Promise<{ token: string }>;
@@ -14,12 +13,13 @@ export default async function ScanPage({ params }: Props) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(token)) {
     return (
-      <PageShell className="flex items-center justify-center">
-        <Card className="text-center space-y-3">
+      <div className="bg-forest min-h-screen flex items-center justify-center p-4">
+        <FloatingParticles />
+        <div className="glass-card p-5 text-center space-y-3 relative z-10">
           <h1 className="text-2xl font-bold text-error">קוד QR לא תקין</h1>
           <p className="text-deep-green/70">הקוד שסרקתם אינו תקף. אנא נסו לסרוק שוב.</p>
-        </Card>
-      </PageShell>
+        </div>
+      </div>
     );
   }
 
@@ -39,23 +39,25 @@ export default async function ScanPage({ params }: Props) {
 
   if (!animal) {
     return (
-      <PageShell className="flex items-center justify-center">
-        <Card className="text-center space-y-3">
+      <div className="bg-forest min-h-screen flex items-center justify-center p-4">
+        <FloatingParticles />
+        <div className="glass-card p-5 text-center space-y-3 relative z-10">
           <h1 className="text-2xl font-bold text-error">תחנה לא נמצאה</h1>
           <p className="text-deep-green/70">הקוד שסרקתם אינו מקושר לתחנה. אנא נסו שוב.</p>
-        </Card>
-      </PageShell>
+        </div>
+      </div>
     );
   }
 
   if (!animal.is_active) {
     return (
-      <PageShell className="flex items-center justify-center">
-        <Card className="text-center space-y-3">
+      <div className="bg-forest min-h-screen flex items-center justify-center p-4">
+        <FloatingParticles />
+        <div className="glass-card p-5 text-center space-y-3 relative z-10">
           <h1 className="text-2xl font-bold text-deep-green">תחנה זמנית לא פעילה</h1>
           <p className="text-deep-green/70">התחנה הזו לא פעילה כרגע. נסו תחנה אחרת!</p>
-        </Card>
-      </PageShell>
+        </div>
+      </div>
     );
   }
 

@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import PageShell from '@/components/ui/PageShell';
-import Card from '@/components/ui/Card';
 import SectionDivider from '@/components/ui/SectionDivider';
 
 const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
@@ -53,16 +51,16 @@ export default function RedeemPage() {
 
   if (loading) {
     return (
-      <PageShell className="flex items-center justify-center">
-        <p className="text-deep-green/70 text-lg">טוען...</p>
-      </PageShell>
+      <div className="bg-forest min-h-screen flex items-center justify-center">
+        <p className="text-deep-green/70 text-lg relative z-10">טוען...</p>
+      </div>
     );
   }
 
   return (
-    <PageShell className="flex flex-col items-center justify-center text-center">
+    <div className="bg-forest min-h-screen flex flex-col items-center justify-center text-center p-4">
       <FloatingParticles />
-      <div className="space-y-6 w-full relative z-10">
+      <div className="space-y-6 w-full max-w-lg relative z-10">
         {/* Trophy badge */}
         <div className="animate-pop-in mx-auto w-20 h-20">
           <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="גביע" className="w-full h-full">
@@ -95,18 +93,18 @@ export default function RedeemPage() {
 
         <SectionDivider variant="wave" />
 
-        <Card className="animate-stamp space-y-4">
+        <div className="glass-card p-5 animate-stamp space-y-4">
           <p className="animate-pulse-highlight text-deep-green/70 rounded-lg px-2 py-1">
             הציגו את הקוד הזה בדלפק הפרסים:
           </p>
           <div className="bg-sand py-4 px-6 rounded-xl">
-            <p className="golden-shimmer text-4xl font-mono font-bold tracking-widest" dir="ltr">
+            <p className="golden-shimmer text-4xl font-mono font-bold tracking-widest" dir="ltr" data-testid="redemption-code">
               {code}
             </p>
           </div>
           <p className="animate-enter-4 text-sm text-deep-green/50">שמרו על המסך פתוח או צלמו צילום מסך</p>
-        </Card>
+        </div>
       </div>
-    </PageShell>
+    </div>
   );
 }
