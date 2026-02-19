@@ -116,7 +116,7 @@ body {
 }
 
 /* Float: vertical drift from bottom to top with slight horizontal sway.
-   Used by NatureParticles for ambient floating elements.
+   Used for ambient floating elements.
    GPU-composited: transform + opacity only. */
 @keyframes float {
   0%   { opacity: 0; transform: translateY(100vh) translateX(0); }
@@ -397,12 +397,6 @@ body {
   }
 }
 
-/* Hide nature particles when user prefers reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .nature-particles {
-    display: none;
-  }
-}
 
 /* Shimmer overlay on collected letter slots — semi-transparent
    white gradient sweeping left-to-right via ::after pseudo-element.
@@ -601,14 +595,6 @@ body {
   box-shadow: 0 10px 15px -3px rgba(26, 138, 110, 0.3), 0 4px 6px -4px rgba(26, 138, 110, 0.3);
 }
 
-/* Nature floating decorations container */
-.nature-decor {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-}
 
 /* Circular animal photo with turquoise ring */
 .animal-photo-ring {

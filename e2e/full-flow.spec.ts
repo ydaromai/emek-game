@@ -388,16 +388,16 @@ test.describe('Admin flow', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Reduced motion', () => {
-  test('nature particles are hidden when prefers-reduced-motion is reduce', async ({ browser }) => {
+  test('floating particles are not rendered when prefers-reduced-motion is reduce', async ({ browser }) => {
     const context = await browser.newContext({
       reducedMotion: 'reduce',
     });
     const page = await context.newPage();
     await page.goto('/');
 
-    // Nature particles container should be hidden (display: none)
-    const particles = page.locator('.nature-particles');
-    await expect(particles).toBeHidden();
+    // FloatingParticles returns null when reduced motion is preferred
+    const particles = page.locator('[data-testid="floating-particles"]');
+    await expect(particles).toHaveCount(0);
 
     await context.close();
   });

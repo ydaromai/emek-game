@@ -8,7 +8,7 @@ import Card from '@/components/ui/Card';
 import ProgressBar from '@/components/ui/ProgressBar';
 import Button from '@/components/ui/Button';
 import LetterReveal from '@/components/LetterReveal';
-import NatureParticles from '@/components/NatureParticles';
+import FloatingParticles from '@/components/FloatingParticles';
 import { getIllustration } from '@/components/illustrations';
 import SectionDivider from '@/components/ui/SectionDivider';
 import TipBox from '@/components/ui/TipBox';
@@ -55,7 +55,7 @@ export default async function AnimalPage({ params, searchParams }: Props) {
 
   return (
     <PageShell>
-      <NatureParticles variant="mixed" />
+      <FloatingParticles />
       <div className="space-y-5 relative z-10">
         {/* Illustration: image_url takes priority, then SVG illustration */}
         {animal.image_url ? (
