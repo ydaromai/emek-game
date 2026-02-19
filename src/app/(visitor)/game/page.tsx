@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, lazy, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -10,9 +11,10 @@ import ProgressBar from '@/components/ui/ProgressBar';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { fireConfetti } from '@/components/Confetti';
-import NatureParticles from '@/components/NatureParticles';
 import SectionDivider from '@/components/ui/SectionDivider';
 import TipBox from '@/components/ui/TipBox';
+
+const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
 
 const QrScanner = lazy(() => import('@/components/QrScanner'));
 
@@ -130,7 +132,7 @@ export default function GamePage() {
 
   return (
     <PageShell>
-      <NatureParticles variant="water" />
+      <FloatingParticles />
       <div className="space-y-6 relative z-10">
         <h1 className="animate-enter-1 text-3xl font-bold text-deep-green text-center">החידה</h1>
 

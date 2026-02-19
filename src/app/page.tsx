@@ -2,7 +2,7 @@ import Link from 'next/link';
 import PageShell from '@/components/ui/PageShell';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import NatureParticles from '@/components/NatureParticles';
+import FloatingParticles from '@/components/FloatingParticles';
 import SectionDivider from '@/components/ui/SectionDivider';
 import TipBox from '@/components/ui/TipBox';
 import { getAllSiteContent } from '@/lib/site-content';
@@ -11,7 +11,7 @@ export default async function HomePage() {
   const content = await getAllSiteContent();
   return (
     <PageShell className="flex flex-col items-center justify-center text-center">
-      <NatureParticles variant="leaves" />
+      <FloatingParticles />
       <div className="space-y-6 relative z-10">
         {/* Hero scene */}
         <div className="animate-enter-1 relative w-full h-56 rounded-2xl overflow-hidden shadow-lg">

@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
@@ -9,6 +10,8 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import SectionDivider from '@/components/ui/SectionDivider';
+
+const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
 
 export default function LoginPage() {
   return (
@@ -49,6 +52,7 @@ function LoginForm() {
 
   return (
     <PageShell className="bg-topo-pattern">
+      <FloatingParticles />
       <div className="space-y-6">
         <SectionDivider variant="leaves" />
         <h1 className="animate-enter-1 text-3xl font-bold text-deep-green text-center">כניסה למשחק</h1>

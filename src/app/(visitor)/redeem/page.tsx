@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import PageShell from '@/components/ui/PageShell';
 import Card from '@/components/ui/Card';
-import NatureParticles from '@/components/NatureParticles';
 import SectionDivider from '@/components/ui/SectionDivider';
+
+const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
 
 const SPARKLES = [
   { top: '-8px', left: '-8px', delay: '0s', size: 8 },
@@ -59,7 +61,7 @@ export default function RedeemPage() {
 
   return (
     <PageShell className="flex flex-col items-center justify-center text-center">
-      <NatureParticles variant="leaves" />
+      <FloatingParticles />
       <div className="space-y-6 w-full relative z-10">
         {/* Trophy badge */}
         <div className="animate-pop-in mx-auto w-20 h-20">
