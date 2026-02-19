@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import Button from '@/components/ui/Button';
 
 interface QrScannerProps {
   onScan: (url: string) => void;
@@ -50,26 +49,77 @@ export default function QrScanner({ onScan, onClose }: QrScannerProps) {
   }, [onScan]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-2xl overflow-hidden w-full max-w-sm">
-        <div className="p-4 text-center">
-          <h2 className="text-lg font-bold text-deep-green">סרקו קוד QR</h2>
-          <p className="text-sm text-deep-green/60">כוונו את המצלמה אל קוד ה-QR בתחנה</p>
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      {/* Inline keyframes for scan animations */}
+      <style>{`
+        @keyframes scanLine {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(200px); }
+        }
+        @keyframes pulseRing {
+          0%, 100% { transform: scale(1); opacity: 0.3; }
+          50% { transform: scale(1.05); opacity: 0; }
+        }
+      `}</style>
+
+      {/* Header with gradient */}
+      <div className="relative bg-gradient-to-b from-[#1a2e1a] to-transparent p-5 pt-8 text-center z-10">
+        <button
+          onClick={onClose}
+          className="absolute top-6 left-4 text-white text-2xl leading-none p-2"
+          aria-label="סגירה"
+        >
+          &#x2715;
+        </button>
+        <h2 className="text-lg font-bold text-white">סרקו קוד QR</h2>
+        <p className="text-sm text-white/70">כוונו את המצלמה אל קוד ה-QR בתחנה</p>
+      </div>
+
+      {/* Scan area */}
+      <div className="flex-1 flex items-center justify-center relative">
+        {/* Camera feed */}
+        <div id="qr-reader" className="absolute inset-0 w-full h-full" />
+
+        {/* Scan frame container */}
+        <div className="relative w-64 h-64 z-10">
+          {/* Pulse ring */}
+          <div
+            className="absolute inset-0 border-2 border-[#4ecdc4] rounded-3xl"
+            style={{ animation: 'pulseRing 2s ease-in-out infinite' }}
+          />
+
+          {/* Corner brackets — top-left */}
+          <div className="absolute top-0 left-0 w-10 h-10 border-t-[3px] border-l-[3px] border-white rounded-tl-lg" />
+          {/* Corner brackets — top-right */}
+          <div className="absolute top-0 right-0 w-10 h-10 border-t-[3px] border-r-[3px] border-white rounded-tr-lg" />
+          {/* Corner brackets — bottom-left */}
+          <div className="absolute bottom-0 left-0 w-10 h-10 border-b-[3px] border-l-[3px] border-white rounded-bl-lg" />
+          {/* Corner brackets — bottom-right */}
+          <div className="absolute bottom-0 right-0 w-10 h-10 border-b-[3px] border-r-[3px] border-white rounded-br-lg" />
+
+          {/* Scanning line */}
+          <div
+            className="absolute left-2 right-2 h-0.5 bg-gradient-to-r from-transparent via-[#4ecdc4] to-transparent shadow-[0_0_15px_#4ecdc4]"
+            style={{ animation: 'scanLine 2.5s ease-in-out infinite' }}
+          />
         </div>
+      </div>
 
-        <div id="qr-reader" className="w-full" />
-
-        {error && (
-          <div className="p-4 text-center">
-            <p className="text-error text-sm">{error}</p>
-          </div>
-        )}
-
-        <div className="p-4">
-          <Button variant="outline" fullWidth onClick={onClose}>
-            סגירה
-          </Button>
+      {/* Error display */}
+      {error && (
+        <div className="px-6 pb-2 text-center z-10">
+          <p className="text-red-400 text-sm">{error}</p>
         </div>
+      )}
+
+      {/* Bottom buttons */}
+      <div className="p-6 pb-8 z-10 space-y-3">
+        <button
+          onClick={onClose}
+          className="w-full bg-white/10 backdrop-blur border border-white/20 text-white py-3 rounded-xl text-base font-medium"
+        >
+          סגירה
+        </button>
       </div>
     </div>
   );
