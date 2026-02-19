@@ -1,16 +1,22 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-deep-green: #2F5D50;
-  --color-turquoise: #4DB6AC;
-  --color-sand: #E8D8B9;
+  --color-deep-green: #1a2e1a;
+  --color-turquoise: #4ecdc4;
+  --color-primary: #1a8a6e;
+  --color-accent: #4ecdc4;
+  --color-muted: #e0ede0;
+  --color-muted-fg: #5a7a5a;
+  --color-sand: #f0f7f0;
   --color-sky-blue: #B3E5FC;
   --color-nature-accent: #4DB6AC;
   --color-nature-bg: #E8D8B9;
   --color-nature-text: #2F5D50;
   --color-nature-light: #F5EFE4;
   --color-nature-dark: #1E3D34;
-  --color-error: #D32F2F;
+  --color-green-bright: #2ecc71;
+  --color-orange: #f39c12;
+  --color-error: #d4183d;
   --color-success: #2E7D32;
   --font-sans: var(--font-rubik), system-ui, -apple-system, sans-serif;
 }
@@ -501,4 +507,116 @@ body {
   background-image:
     radial-gradient(ellipse at 50% 0%, rgba(77, 182, 172, 0.15) 0%, transparent 70%),
     radial-gradient(ellipse at 100% 100%, rgba(47, 93, 80, 0.10) 0%, transparent 60%);
+}
+
+/* ============================================================
+   FOREST BACKGROUND — Full-page misty nature scene
+   ============================================================ */
+
+/* Background uses Unsplash via CSS url() — intentional. This bypasses next/image
+   optimization but is required for CSS background-image. The image is static and
+   cached by the browser. All other Unsplash images use next/image which proxies
+   through Vercel, avoiding direct user→Unsplash requests. */
+.bg-forest {
+  position: relative;
+  background-color: #2d5a3d;
+  background-image: url('https://images.unsplash.com/photo-1695289211539-9b8d0adb815e?w=1080&q=75');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.bg-forest::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(to bottom, rgba(232,245,233,0.85), rgba(240,247,240,0.80), rgba(200,230,201,0.85));
+}
+.bg-forest::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Decorative blur blobs for depth */
+.bg-forest-blobs {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.bg-forest-blobs::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  background: rgba(26, 138, 110, 0.12);
+  filter: blur(80px);
+}
+.bg-forest-blobs::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  right: -10%;
+  width: 45%;
+  height: 45%;
+  border-radius: 50%;
+  background: rgba(78, 205, 196, 0.10);
+  filter: blur(80px);
+}
+.bg-forest-blob-center {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  background: rgba(46, 204, 113, 0.08);
+  filter: blur(60px);
+}
+
+/* Glassmorphic card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 25px -5px rgba(26, 138, 110, 0.1), 0 8px 10px -6px rgba(26, 138, 110, 0.1);
+}
+
+/* Gradient button (primary → bright green) */
+.btn-gradient {
+  background: linear-gradient(to right, #1a8a6e, #2ecc71);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 10px 15px -3px rgba(26, 138, 110, 0.3), 0 4px 6px -4px rgba(26, 138, 110, 0.3);
+}
+
+/* Nature floating decorations container */
+.nature-decor {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Circular animal photo with turquoise ring */
+.animal-photo-ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid #4DB6AC;
+  box-shadow: 0 0 0 6px rgba(77, 182, 172, 0.15);
+  overflow: hidden;
+  object-fit: cover;
 }
