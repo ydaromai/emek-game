@@ -11,6 +11,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { fireConfetti } from '@/components/Confetti';
 import NatureParticles from '@/components/NatureParticles';
+import SectionDivider from '@/components/ui/SectionDivider';
+import TipBox from '@/components/ui/TipBox';
 
 const QrScanner = lazy(() => import('@/components/QrScanner'));
 
@@ -18,7 +20,21 @@ interface SlotData {
   order_index: number;
   letter: string | null;
   collected: boolean;
+  name_he: string;
 }
+
+const ANIMAL_EMOJI: Record<string, string> = {
+  'שלדג': '🐦',
+  'לוטרה': '🦦',
+  'אנפה': '🦢',
+  'צב ביצות': '🐢',
+  'אילנית': '🐸',
+  'סרטן מים מתוקים': '🦀',
+  'שפירית': '🪰',
+  'בינון': '🐟',
+  'נמייה': '🦡',
+  'פרפר': '🦋',
+};
 
 export default function GamePage() {
   const router = useRouter();
@@ -54,7 +70,7 @@ export default function GamePage() {
     // Get active animals
     const { data: animals } = await supabase
       .from('animals')
-      .select('id, letter, order_index')
+      .select('id, letter, order_index, name_he')
       .eq('is_active', true)
       .order('order_index');
 
@@ -70,6 +86,7 @@ export default function GamePage() {
       order_index: a.order_index,
       letter: progressMap.has(a.id) ? progressMap.get(a.id)! : null,
       collected: progressMap.has(a.id),
+      name_he: a.name_he,
     }));
 
     setSlots(slotData);
@@ -121,6 +138,8 @@ export default function GamePage() {
           <ProgressBar current={collectedCount} total={totalSlots} label="תחנות" pulse />
         </div>
 
+        <SectionDivider variant="leaves" />
+
         {/* Letter slots */}
         <Card>
           <div className="flex flex-wrap justify-center gap-2" style={{ perspective: '600px' }}>
@@ -143,6 +162,11 @@ export default function GamePage() {
                   e.currentTarget.style.transform = '';
                 }}
               >
+                {slot.collected && ANIMAL_EMOJI[slot.name_he] && (
+                  <span className="animate-emoji-bounce absolute -top-3 text-sm" aria-hidden="true">
+                    {ANIMAL_EMOJI[slot.name_he]}
+                  </span>
+                )}
                 {slot.collected ? slot.letter : '?'}
               </div>
             ))}
@@ -164,6 +188,7 @@ export default function GamePage() {
                 ? 'גשו לאחת מ-10 התחנות בפארק וסרקו את קוד ה-QR'
                 : `נשארו עוד ${totalSlots - collectedCount} תחנות — המשיכו לסרוק!`}
             </p>
+            <TipBox icon="🔭">טיפ: חפשו את תחנות ה-QR ליד שילוט המעיינות והשבילים המסומנים</TipBox>
           </div>
         )}
 
