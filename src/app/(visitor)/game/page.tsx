@@ -1,15 +1,10 @@
 'use client';
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import PageShell from '@/components/ui/PageShell';
-import Card from '@/components/ui/Card';
-import ProgressBar from '@/components/ui/ProgressBar';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import { fireConfetti } from '@/components/Confetti';
 import SectionDivider from '@/components/ui/SectionDivider';
 import TipBox from '@/components/ui/TipBox';
@@ -48,6 +43,10 @@ export default function GamePage() {
   const [completed, setCompleted] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Progress bar pulse key
+  const [pulseKey, setPulseKey] = useState(0);
+  const prevCollected = useRef(0);
 
   useEffect(() => {
     loadProgress();
@@ -93,6 +92,13 @@ export default function GamePage() {
 
     setSlots(slotData);
     setAnswer(slotData.filter((s) => s.collected).map((s) => s.letter).join(''));
+
+    const newCollected = slotData.filter((s) => s.collected).length;
+    if (newCollected !== prevCollected.current) {
+      setPulseKey((k) => k + 1);
+      prevCollected.current = newCollected;
+    }
+
     setLoading(false);
   }
 
@@ -121,129 +127,191 @@ export default function GamePage() {
 
   if (loading) {
     return (
-      <PageShell className="flex items-center justify-center">
-        <p className="text-deep-green/70 text-lg">טוען...</p>
-      </PageShell>
+      <div className="bg-forest min-h-screen">
+        <div className="relative z-10 flex items-center justify-center min-h-screen px-4 py-6 max-w-lg mx-auto">
+          <p className="text-[#1a8a6e]/70 text-lg">טוען...</p>
+        </div>
+      </div>
     );
   }
 
   const collectedCount = slots.filter((s) => s.collected).length;
   const totalSlots = slots.length;
+  const percentage = totalSlots > 0 ? Math.round((collectedCount / totalSlots) * 100) : 0;
 
   return (
-    <PageShell>
-      <FloatingParticles />
-      <div className="space-y-6 relative z-10">
-        <h1 className="animate-enter-1 text-3xl font-bold text-deep-green text-center">החידה</h1>
+    <div className="bg-forest min-h-screen">
+      <main className="relative z-10 px-4 py-6 max-w-lg mx-auto">
+        <FloatingParticles />
+        <div className="space-y-6 relative z-10">
+          {/* Title */}
+          <h1 className="animate-enter-1 text-3xl font-bold text-[#1a8a6e] text-center">החידה</h1>
 
-        <div className="animate-enter-2">
-          <ProgressBar current={collectedCount} total={totalSlots} label="תחנות" pulse />
-        </div>
-
-        <SectionDivider variant="leaves" />
-
-        {/* Letter slots */}
-        <Card>
-          <div className="flex flex-wrap justify-center gap-2" style={{ perspective: '600px' }}>
-            {slots.map((slot, i) => (
+          {/* Progress bar — inline implementation */}
+          <div className="animate-enter-2 w-full">
+            <div className="flex justify-between items-center mb-2 text-sm font-medium">
+              <span className="text-[#5a7a5a]">תחנות</span>
+              <span className="text-[#1a8a6e]">{collectedCount} מתוך {totalSlots}</span>
+            </div>
+            <div
+              className={`w-full h-3 bg-[#e0ede0] rounded-full overflow-hidden ${pulseKey > 0 ? 'animate-pulse-once' : ''}`}
+            >
               <div
-                key={slot.order_index}
-                className={`
-                  w-12 h-12 rounded-lg flex items-center justify-center text-xl font-bold
-                  transition-transform duration-200 cursor-default relative overflow-hidden
-                  ${slot.collected
-                    ? `bg-turquoise text-white shadow-md animate-pop-in slot-shimmer`
-                    : 'bg-deep-green/10 text-deep-green/30 animate-breathe'
-                  }
-                `}
-                style={slot.collected ? { animationDelay: `${i * 80}ms` } : undefined}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'perspective(200px) rotateY(3deg) rotateX(2deg)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = '';
-                }}
-              >
-                {slot.collected && ANIMAL_EMOJI[slot.name_he] && (
-                  <span className="animate-emoji-bounce absolute -top-3 text-sm" aria-hidden="true">
-                    {ANIMAL_EMOJI[slot.name_he]}
-                  </span>
-                )}
-                {slot.collected ? slot.letter : '?'}
-              </div>
+                key={pulseKey}
+                className="h-full w-full bg-gradient-to-r from-[#1a8a6e] to-[#4ecdc4] rounded-full animate-fill-bar progress-shimmer"
+                style={{
+                  '--fill-target': `${percentage / 100}`,
+                  transformOrigin: 'right',
+                } as React.CSSProperties}
+              />
+            </div>
+          </div>
+
+          <SectionDivider variant="leaves" />
+
+          {/* Progress dots */}
+          <div className="flex justify-center gap-1.5">
+            {slots.map((slot) => (
+              <div
+                key={`dot-${slot.order_index}`}
+                className={`w-2.5 h-2.5 rounded-full transition-colors duration-300 ${
+                  slot.collected ? 'bg-[#4ecdc4]' : 'bg-[#e0ede0]'
+                }`}
+              />
             ))}
           </div>
-        </Card>
 
-        {/* Scan button + prompt */}
-        {!completed && collectedCount < totalSlots && (
-          <div className="space-y-3">
-            <Button
-              fullWidth
-              variant="secondary"
-              onClick={() => setShowScanner(true)}
-            >
-              📷 סרקו קוד QR
-            </Button>
-            <p className="text-sm text-deep-green/60 text-center">
-              {collectedCount === 0
-                ? 'גשו לאחת מ-10 התחנות בפארק וסרקו את קוד ה-QR'
-                : `נשארו עוד ${totalSlots - collectedCount} תחנות — המשיכו לסרוק!`}
-            </p>
-            <TipBox icon="🔭">טיפ: חפשו את תחנות ה-QR ליד שילוט המעיינות והשבילים המסומנים</TipBox>
+          {/* Letter slots card */}
+          <div className="glass-card p-5">
+            <div className="flex flex-wrap justify-center gap-2" style={{ perspective: '600px' }}>
+              {slots.map((slot, i) => (
+                <div
+                  key={slot.order_index}
+                  className={`
+                    w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold
+                    transition-transform duration-200 cursor-default relative overflow-hidden
+                    ${slot.collected
+                      ? 'bg-gradient-to-br from-[#4ecdc4] to-[#1a8a6e] text-white shadow-md animate-pop-in slot-shimmer'
+                      : 'bg-[#e0ede0] text-[#b8d4b8] animate-breathe'
+                    }
+                  `}
+                  style={slot.collected ? { animationDelay: `${i * 80}ms` } : undefined}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'perspective(200px) rotateY(3deg) rotateX(2deg)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = '';
+                  }}
+                >
+                  {slot.collected && ANIMAL_EMOJI[slot.name_he] && (
+                    <span className="animate-emoji-bounce absolute -top-3 text-sm" aria-hidden="true">
+                      {ANIMAL_EMOJI[slot.name_he]}
+                    </span>
+                  )}
+                  {slot.collected ? slot.letter : '?'}
+                </div>
+              ))}
+            </div>
           </div>
-        )}
 
-        {/* QR Scanner overlay */}
-        {showScanner && (
-          <Suspense fallback={null}>
-            <QrScanner
-              onScan={(url) => {
-                setShowScanner(false);
-                // Extract the path from the URL and navigate
-                try {
-                  const parsed = new URL(url);
-                  router.push(parsed.pathname);
-                } catch {
-                  // If not a full URL, try using it directly
-                  router.push(url);
-                }
-              }}
-              onClose={() => setShowScanner(false)}
-            />
-          </Suspense>
-        )}
+          {/* Scan button + prompt */}
+          {!completed && collectedCount < totalSlots && (
+            <div className="space-y-3">
+              <button
+                type="button"
+                className="w-full min-h-[44px] min-w-[44px] px-6 py-3 bg-gradient-to-r from-[#4ecdc4] to-[#1a8a6e] text-white font-medium text-lg rounded-xl shadow-lg shadow-[#4ecdc4]/30 transition-all duration-200 active:scale-[0.97] hover:opacity-90"
+                onClick={() => setShowScanner(true)}
+              >
+                סרקו קוד QR 📸
+              </button>
+              <p className="text-sm text-[#5a7a5a] text-center">
+                {collectedCount === 0
+                  ? 'גשו לאחת מ-10 התחנות בפארק וסרקו את קוד ה-QR'
+                  : `נשארו עוד ${totalSlots - collectedCount} תחנות — המשיכו לסרוק!`}
+              </p>
+              <TipBox icon="🔭">טיפ: חפשו את תחנות ה-QR ליד שילוט המעיינות והשבילים המסומנים</TipBox>
+            </div>
+          )}
 
-        {/* Submit area */}
-        {success ? (
-          <div className="text-center space-y-3 animate-pop-in">
-            <p className="text-2xl font-bold text-success">כל הכבוד!</p>
-            <p className="text-deep-green/70">מעבירים אתכם לדף הפרס...</p>
-          </div>
-        ) : completed ? (
-          <div className="text-center space-y-3">
-            <p className="text-lg font-semibold text-success">כל הכבוד! פתרתם את החידה!</p>
-            <Link href="/redeem">
-              <Button fullWidth variant="secondary">לדף הפרס</Button>
-            </Link>
-          </div>
-        ) : (
-          <Card>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <Input
-                label="הכניסו את המילה"
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-                placeholder="הקלידו את המילה שגיליתם"
+          {/* QR Scanner overlay */}
+          {showScanner && (
+            <Suspense fallback={null}>
+              <QrScanner
+                onScan={(url) => {
+                  setShowScanner(false);
+                  // Extract the path from the URL and navigate
+                  try {
+                    const parsed = new URL(url);
+                    router.push(parsed.pathname);
+                  } catch {
+                    // If not a full URL, try using it directly
+                    router.push(url);
+                  }
+                }}
+                onClose={() => setShowScanner(false)}
               />
-              {error && <p className="text-error text-sm">{error}</p>}
-              <Button type="submit" fullWidth disabled={submitting || collectedCount === 0}>
-                {submitting ? 'בודקים...' : 'בדיקה'}
-              </Button>
-            </form>
-          </Card>
-        )}
-      </div>
-    </PageShell>
+            </Suspense>
+          )}
+
+          {/* Submit area */}
+          {success ? (
+            <>
+              {/* Success modal overlay */}
+              <div
+                data-testid="success-modal"
+                className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center"
+              >
+                <div className="bg-white/95 rounded-3xl p-8 mx-4 max-w-sm w-full text-center space-y-3 animate-pop-in">
+                  <div data-testid="success-trophy" className="text-5xl">🏆</div>
+                  <p className="text-2xl font-bold text-[#1a8a6e]">כל הכבוד!</p>
+                  <p className="text-[#5a7a5a]">מעבירים אתכם לדף הפרס...</p>
+                </div>
+              </div>
+            </>
+          ) : completed ? (
+            <div className="text-center space-y-3">
+              <p className="text-lg font-semibold text-[#1a8a6e]">כל הכבוד! פתרתם את החידה!</p>
+              <Link href="/redeem">
+                <button
+                  type="button"
+                  className="w-full min-h-[44px] min-w-[44px] px-6 py-3 bg-gradient-to-r from-[#4ecdc4] to-[#1a8a6e] text-white font-medium text-lg rounded-xl shadow-lg shadow-[#4ecdc4]/30 transition-all duration-200 active:scale-[0.97] hover:opacity-90"
+                >
+                  לדף הפרס
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <div className="glass-card p-5">
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <div className="w-full">
+                  <label
+                    htmlFor="word-input"
+                    className="block text-sm font-medium text-[#1a8a6e] mb-1"
+                  >
+                    הכניסו את המילה
+                  </label>
+                  <input
+                    id="word-input"
+                    type="text"
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    placeholder="הקלידו את המילה שגיליתם"
+                    className="w-full min-h-[44px] bg-[#f0f7f0] rounded-xl px-4 py-3 text-lg text-nature-text placeholder:text-[#b8d4b8] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#4ecdc4] border-none"
+                  />
+                </div>
+                {error && <p className="text-error text-sm">{error}</p>}
+                <button
+                  type="submit"
+                  disabled={submitting || collectedCount === 0}
+                  className="w-full min-h-[44px] min-w-[44px] px-6 py-3 btn-gradient font-medium text-lg transition-all duration-200 active:scale-[0.97] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'בודקים...' : 'בדיקה ✨'}
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
