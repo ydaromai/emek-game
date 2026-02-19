@@ -10,6 +10,7 @@ const navItems = [
   { href: '/admin/users', label: 'משתמשים', icon: '👥' },
   { href: '/admin/animals', label: 'תחנות', icon: '🦎' },
   { href: '/admin/verify-prize', label: 'אימות פרס', icon: '🎁' },
+  { href: '/admin/content', label: 'תוכן', icon: '📝' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
