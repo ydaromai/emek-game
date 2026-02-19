@@ -3,15 +3,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
-import PageShell from '@/components/ui/PageShell';
-import Card from '@/components/ui/Card';
 import ProgressBar from '@/components/ui/ProgressBar';
-import Button from '@/components/ui/Button';
 import LetterReveal from '@/components/LetterReveal';
 import FloatingParticles from '@/components/FloatingParticles';
-import { getIllustration } from '@/components/illustrations';
-import SectionDivider from '@/components/ui/SectionDivider';
-import TipBox from '@/components/ui/TipBox';
+import FloatingAvatar from '@/components/FloatingAvatar';
+import AnimalFactsCarousel from '@/components/AnimalFactsCarousel';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -49,67 +45,58 @@ export default async function AnimalPage({ params, searchParams }: Props) {
   const scannedCount = progress?.length || 0;
   const total = totalActive || 10;
 
-  const IllustrationComponent = animal.illustration_key
-    ? getIllustration(animal.illustration_key)
-    : null;
+  // Build facts array for the carousel
+  const facts: { icon: string; title: string; text: string }[] = [];
+
+  if (animal.habitat) {
+    facts.push({ icon: '🏞️', title: 'בית הגידול', text: animal.habitat });
+  }
+
+  if (animal.fun_facts) {
+    facts.push({ icon: '🔍', title: 'עובדות מעניינות', text: animal.fun_facts });
+  }
+
+  if (animal.conservation_tip) {
+    facts.push({ icon: '🌿', title: 'טיפ ירוק', text: animal.conservation_tip });
+  }
 
   return (
-    <PageShell>
+    <main className="bg-forest min-h-screen">
       <FloatingParticles />
-      <div className="space-y-5 relative z-10">
-        {/* Illustration: image_url takes priority, then SVG illustration */}
-        {animal.image_url ? (
-          <div className="animate-enter-1 relative w-full aspect-video rounded-2xl overflow-hidden">
-            <Image
-              src={animal.image_url}
-              alt={animal.name_he}
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
-        ) : IllustrationComponent ? (
-          <div className="animate-enter-1 relative w-full aspect-[200/180] rounded-2xl overflow-hidden bg-gradient-to-b from-sky-blue/30 to-sand/50 flex items-center justify-center">
-            <IllustrationComponent className="w-3/4 h-3/4 animate-illustration-float" />
-          </div>
-        ) : null}
+      <div className="relative z-10 max-w-lg mx-auto px-4 py-8 space-y-6">
+        {/* Animal avatar + name + letter */}
+        <div className="animate-enter-1 flex flex-col items-center text-center space-y-3">
+          <FloatingAvatar>
+            <div className="w-20 h-20 rounded-full border-[4px] border-[#4ecdc4] shadow-lg shadow-[#4ecdc4]/30 overflow-hidden">
+              {animal.image_url ? (
+                <Image
+                  src={animal.image_url}
+                  alt={animal.name_he}
+                  width={80}
+                  height={80}
+                  className="object-cover w-full h-full"
+                  priority
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-b from-sky-blue/30 to-sand/50 flex items-center justify-center text-2xl">
+                  🐾
+                </div>
+              )}
+            </div>
+          </FloatingAvatar>
 
-        {/* Animal name and letter */}
-        <div className="animate-enter-2 text-center space-y-2">
           <h1 className="text-3xl font-bold text-deep-green">{animal.name_he}</h1>
           <LetterReveal letter={animal.letter} isNew={isNew} />
         </div>
 
-        {/* Section divider */}
-        <SectionDivider variant="wave" />
-
-        {/* Section 1 — Habitat */}
-        {animal.habitat && (
-          <Card className="animate-enter-3 border-r-4 border-r-sky-blue/30">
-            <h2 className="text-lg font-semibold text-deep-green mb-2">🏞️ בית הגידול</h2>
-            <p className="text-deep-green/80 leading-relaxed">{animal.habitat}</p>
-          </Card>
-        )}
-
-        {/* Section 2 — Fun Facts */}
-        <Card className="animate-enter-4 border-r-4 border-r-turquoise/30">
-          <h2 className="text-lg font-semibold text-deep-green mb-2">🔍 עובדות מעניינות</h2>
-          <p className="text-deep-green/80 leading-relaxed">{animal.fun_facts}</p>
-        </Card>
-
-        {/* Section 3 — Conservation Tip */}
-        {animal.conservation_tip && (
-          <TipBox icon="🌿" className="animate-enter-5">
-            <div>
-              <h2 className="text-lg font-semibold text-deep-green mb-1">טיפ ירוק</h2>
-              <p className="text-deep-green/80 leading-relaxed">{animal.conservation_tip}</p>
-            </div>
-          </TipBox>
+        {/* Facts carousel */}
+        {facts.length > 0 && (
+          <AnimalFactsCarousel facts={facts} />
         )}
 
         {/* Video */}
         {animal.video_url && (
-          <Card>
+          <div className="glass-card rounded-2xl overflow-hidden">
             <video
               src={animal.video_url}
               controls
@@ -117,17 +104,38 @@ export default async function AnimalPage({ params, searchParams }: Props) {
               preload="none"
               className="w-full rounded-xl"
             />
-          </Card>
+          </div>
         )}
 
         {/* Progress */}
-        <ProgressBar current={scannedCount} total={total} label="התקדמות" />
+        <div className="glass-card rounded-2xl p-4">
+          <ProgressBar current={scannedCount} total={total} label="התקדמות" />
+        </div>
 
-        {/* Continue button */}
-        <Link href="/game">
-          <Button fullWidth variant="secondary">המשיכו לחידה</Button>
+        {/* Continue to puzzle button */}
+        <Link
+          href="/game"
+          className="block w-full text-center py-4 rounded-2xl font-bold text-lg text-white bg-gradient-to-r from-[#4ecdc4] to-[#1a8a6e] shadow-lg shadow-[#1a8a6e]/25 active:scale-[0.97] transition-transform"
+        >
+          המשיכו לחידה
         </Link>
+
+        {/* Nature trail footer banner */}
+        <div className="relative h-32 rounded-2xl overflow-hidden bg-[#2d5a3d]">
+          <Image
+            src="https://images.unsplash.com/photo-1766012166662-906c82c18d9f?w=1080&q=75"
+            alt="שביל טבע"
+            fill
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-l from-[#1a2e1a]/60 to-transparent" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-white text-lg font-bold drop-shadow-md">
+              🌿 גלו את הטבע סביבכם
+            </p>
+          </div>
+        </div>
       </div>
-    </PageShell>
+    </main>
   );
 }
