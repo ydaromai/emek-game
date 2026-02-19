@@ -7,13 +7,36 @@ import Image from 'next/image';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import { getIllustration } from '@/components/illustrations';
+
+const illustrationOptions = [
+  { value: '', label: 'ללא' },
+  { value: 'kingfisher', label: 'שלדג' },
+  { value: 'otter', label: 'לוטרה' },
+  { value: 'heron', label: 'אנפה' },
+  { value: 'turtle', label: 'צב ביצות' },
+  { value: 'frog', label: 'אילנית' },
+  { value: 'crab', label: 'סרטן מים מתוקים' },
+  { value: 'dragonfly', label: 'שפירית' },
+  { value: 'fish', label: 'בינון' },
+  { value: 'mongoose', label: 'נמייה' },
+  { value: 'butterfly', label: 'פרפר' },
+];
 
 export default function EditAnimalPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
 
-  const [form, setForm] = useState({ name_he: '', fun_facts: '', letter: '', order_index: 1 });
+  const [form, setForm] = useState({
+    name_he: '',
+    fun_facts: '',
+    letter: '',
+    order_index: 1,
+    habitat: '',
+    conservation_tip: '',
+    illustration_key: '',
+  });
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +60,9 @@ export default function EditAnimalPage() {
         fun_facts: data.fun_facts,
         letter: data.letter,
         order_index: data.order_index,
+        habitat: data.habitat || '',
+        conservation_tip: data.conservation_tip || '',
+        illustration_key: data.illustration_key || '',
       });
       setImageUrl(data.image_url);
       setVideoUrl(data.video_url);
@@ -119,6 +145,8 @@ export default function EditAnimalPage() {
     }
   }
 
+  const IllustrationPreview = form.illustration_key ? getIllustration(form.illustration_key) : null;
+
   if (loading) return <p className="text-center py-10">טוען...</p>;
 
   return (
@@ -137,6 +165,41 @@ export default function EditAnimalPage() {
               className="w-full min-h-[100px] px-4 py-3 rounded-xl border-2 border-deep-green/20 bg-white text-nature-text"
               required
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-deep-green mb-1">בית גידול</label>
+            <textarea
+              value={form.habitat}
+              onChange={(e) => setForm({ ...form, habitat: e.target.value })}
+              className="w-full min-h-[80px] px-4 py-3 rounded-xl border-2 border-deep-green/20 bg-white text-nature-text"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-deep-green mb-1">טיפ ירוק</label>
+            <textarea
+              value={form.conservation_tip}
+              onChange={(e) => setForm({ ...form, conservation_tip: e.target.value })}
+              className="w-full min-h-[80px] px-4 py-3 rounded-xl border-2 border-deep-green/20 bg-white text-nature-text"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-deep-green mb-1">איור</label>
+            <div className="flex items-center gap-3">
+              <select
+                value={form.illustration_key}
+                onChange={(e) => setForm({ ...form, illustration_key: e.target.value })}
+                className="flex-1 px-4 py-3 rounded-xl border-2 border-deep-green/20 bg-white text-nature-text"
+              >
+                {illustrationOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              {IllustrationPreview && (
+                <div className="w-12 h-12 flex-shrink-0">
+                  <IllustrationPreview className="w-12 h-12" />
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex gap-3">
             <Button type="submit" disabled={saving}>{saving ? 'שומר...' : 'שמירה'}</Button>
