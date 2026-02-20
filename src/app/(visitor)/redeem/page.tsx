@@ -31,9 +31,9 @@ export default function RedeemPage() {
 
   async function loadRedemption() {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!session) {
+    if (!user) {
       router.push('/login?redirect=/redeem');
       return;
     }
@@ -41,7 +41,7 @@ export default function RedeemPage() {
     const { data: redemption } = await supabase
       .from('redemptions')
       .select('redemption_code')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('tenant_id', tenantId)
       .single();
 

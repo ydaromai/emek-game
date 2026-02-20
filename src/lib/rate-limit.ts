@@ -1,3 +1,15 @@
+/**
+ * WARNING: Serverless Limitation
+ * This in-memory rate limiter does NOT work on Vercel serverless/Edge runtime.
+ * Each Lambda invocation has isolated memory — the Map resets on every cold start.
+ * For production use, migrate to Upstash Redis (@upstash/ratelimit).
+ * TODO: Replace with Upstash Redis rate limiter before production launch.
+ *
+ * NOTE: This module is intentionally not yet wired into API routes.
+ * It serves as a placeholder for future integration once migrated to Redis.
+ * Do not import this module expecting production rate limiting.
+ */
+
 const rateStore = new Map<string, { count: number; resetAt: number }>();
 
 export function rateLimit(key: string, maxRequests: number, windowMs: number): boolean {

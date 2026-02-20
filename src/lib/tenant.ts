@@ -16,6 +16,9 @@ export async function getTenantSlug(): Promise<string | null> {
 /**
  * Fetch full tenant config from DB, deduped per-request via React cache().
  * No cross-request caching (Edge runtime is stateless).
+ *
+ * Returns the tenant regardless of is_active status so callers can
+ * distinguish "not found" from "suspended".
  */
 export const getTenant = cache(async (slug: string): Promise<Tenant | null> => {
   const supabase = await createClient();
@@ -23,7 +26,6 @@ export const getTenant = cache(async (slug: string): Promise<Tenant | null> => {
     .from('tenants')
     .select('*')
     .eq('slug', slug)
-    .eq('is_active', true)
     .single();
   return data;
 });
@@ -36,15 +38,31 @@ export async function getTenantOrNotFound(slug: string): Promise<Tenant> {
   if (!tenant) {
     redirect('/tenant-not-found');
   }
+  if (!tenant.is_active) {
+    redirect('/tenant-suspended?name=' + encodeURIComponent(tenant.name));
+  }
   return tenant;
 }
 
 /**
  * Convenience: get tenant from headers in one call.
- * Returns null if on bare domain.
+ * Returns null if on bare domain (no slug).
+ * Redirects to /tenant-not-found if slug is present but tenant doesn't exist.
+ * Redirects to /tenant-suspended?name=... if tenant is suspended.
  */
 export async function resolveTenant(): Promise<Tenant | null> {
   const slug = await getTenantSlug();
   if (!slug) return null;
-  return getTenant(slug);
+
+  const tenant = await getTenant(slug);
+
+  if (!tenant) {
+    redirect('/tenant-not-found');
+  }
+
+  if (!tenant.is_active) {
+    redirect('/tenant-suspended?name=' + encodeURIComponent(tenant.name));
+  }
+
+  return tenant;
 }

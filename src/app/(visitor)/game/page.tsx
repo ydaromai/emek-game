@@ -58,14 +58,14 @@ export default function GamePage() {
 
   async function loadProgress() {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { router.push('/login?redirect=/game'); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.push('/login?redirect=/game'); return; }
 
     // Check if already completed (tenant-scoped profile)
     const { data: profile } = await supabase
       .from('profiles')
       .select('completion_status')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('tenant_id', tenantId)
       .single();
 
@@ -85,7 +85,7 @@ export default function GamePage() {
     const { data: progress } = await supabase
       .from('user_progress')
       .select('animal_id, letter')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('tenant_id', tenantId);
 
     const progressMap = new Map(progress?.map((p) => [p.animal_id, p.letter]) || []);

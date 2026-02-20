@@ -73,15 +73,19 @@ test.describe('Registration', () => {
 
     await page.getByRole('button', { name: /הרשמה/ }).click();
 
-    await page.waitForTimeout(3000);
+    // Use Promise.race instead of waitForTimeout + triple-OR assertion
+    const result = await Promise.race([
+      page.waitForURL('**/game**', { timeout: 15_000 }).then(() => 'game' as const),
+      page.waitForSelector('[data-testid="email-confirm"]', { timeout: 15_000 }).then(() => 'confirm' as const),
+    ]);
 
-    const url = page.url();
-    const bodyText = await page.textContent('body');
-
-    const onGamePage = url.includes('/game');
-    const emailConfirmRequired = bodyText?.includes('שגיאה') || bodyText?.includes('confirm');
-
-    expect(onGamePage || emailConfirmRequired || url.includes('/register')).toBeTruthy();
+    if (result === 'game') {
+      // Registration succeeded and redirected to game page
+      expect(page.url()).toContain('/game');
+    } else {
+      // Email confirmation required — verify the confirmation message is visible
+      await expect(page.locator('[data-testid="email-confirm"]')).toBeVisible();
+    }
   });
 });
 
@@ -113,6 +117,37 @@ test.describe('Login', () => {
     await page.getByRole('button', { name: /כניסה/ }).click();
     await page.waitForURL('**/game**', { timeout: 10_000 });
     expect(page.url()).toContain('/game');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3.5. FORGOT PASSWORD
+// ─────────────────────────────────────────────────────────────────────────────
+
+test.describe('Forgot password', () => {
+  test('navigates from login to forgot-password and submits email', async ({ page }) => {
+    await page.goto(`/login${TENANT_PARAM}`);
+
+    // Click the "forgot password" link
+    await page.getByRole('link', { name: /שכחתם סיסמה/ }).click();
+    await page.waitForURL('**/forgot-password**', { timeout: 10_000 });
+
+    // Verify the page loaded
+    await expect(page.getByRole('heading', { name: 'שחזור סיסמה' })).toBeVisible();
+
+    // Fill in email and submit
+    await page.getByLabel('אימייל').fill('test-forgot@parktest.co.il');
+    await page.getByRole('button', { name: /שלחו קישור/ }).click();
+
+    // Verify confirmation message appears
+    await expect(page.getByText('נשלח אליכם אימייל עם קישור לאיפוס הסיסמה')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('בדקו גם בתיקיית הספאם')).toBeVisible();
+  });
+
+  test('shows back-to-login link on forgot-password page', async ({ page }) => {
+    await page.goto(`/forgot-password${TENANT_PARAM}`);
+
+    await expect(page.getByRole('link', { name: /חזרה לכניסה/ })).toBeVisible();
   });
 });
 
@@ -277,8 +312,10 @@ test.describe('Full game flow', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Admin flow', () => {
-  const adminEmail = process.env.ADMIN_EMAIL || 'ydarom@gmail.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'Kokol000!';
+  const adminEmail = process.env.E2E_ADMIN_EMAIL;
+  const adminPassword = process.env.E2E_ADMIN_PASSWORD;
+
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin E2E credentials not configured — set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD');
 
   async function adminLogin(page: Page) {
     await page.goto(`/admin/login${TENANT_PARAM}`);

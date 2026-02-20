@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function DELETE(
   request: Request,
@@ -42,7 +43,8 @@ export async function DELETE(
       .eq('tenant_id', tenantId);
 
     if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      console.error('Failed to revoke membership:', deleteError.message);
+      return NextResponse.json({ error: 'Failed to revoke membership' }, { status: 500 });
     }
 
     return NextResponse.json({ message: 'Membership revoked' });

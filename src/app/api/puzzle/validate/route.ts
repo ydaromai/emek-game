@@ -4,20 +4,26 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getTenant } from '@/lib/tenant';
 
-function generateRedemptionCode(): string {
+function generateRedemptionCode(length = 8): string {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // Excluded: 0, O, 1, I, L
-  let code = '';
-  for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  const maxValid = 256 - (256 % chars.length); // Rejection sampling to eliminate modulo bias
+  const result: string[] = [];
+  while (result.length < length) {
+    const randomBytes = crypto.getRandomValues(new Uint8Array(length * 2));
+    for (const byte of randomBytes) {
+      if (byte < maxValid && result.length < length) {
+        result.push(chars[byte % chars.length]);
+      }
+    }
   }
-  return code;
+  return result.join('');
 }
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'לא מחוברים' }, { status: 401 });
   }
 
@@ -33,7 +39,13 @@ export async function POST(request: NextRequest) {
   }
   const tenantId = tenant.id;
 
-  const { answer } = await request.json();
+  let answer: string;
+  try {
+    const body = await request.json();
+    answer = body.answer;
+  } catch {
+    return NextResponse.json({ error: 'תשובה חסרה' }, { status: 400 });
+  }
   if (!answer || typeof answer !== 'string') {
     return NextResponse.json({ error: 'תשובה חסרה' }, { status: 400 });
   }
@@ -42,7 +54,7 @@ export async function POST(request: NextRequest) {
   const { data: existingRedemption } = await supabase
     .from('redemptions')
     .select('redemption_code')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('tenant_id', tenantId)
     .single();
 
@@ -77,7 +89,7 @@ export async function POST(request: NextRequest) {
   const redemptionCode = generateRedemptionCode();
 
   await adminClient.from('redemptions').insert({
-    user_id: session.user.id,
+    user_id: user.id,
     tenant_id: tenantId,
     redemption_code: redemptionCode,
   });
@@ -88,7 +100,7 @@ export async function POST(request: NextRequest) {
       completion_status: 'completed',
       completed_at: new Date().toISOString(),
     })
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('tenant_id', tenantId);
 
   return NextResponse.json({

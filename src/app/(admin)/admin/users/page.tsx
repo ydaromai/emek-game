@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { useTenant } from '@/components/TenantProvider';
+import { sanitizeSearchInput } from '@/lib/sanitize';
 
 interface UserRow {
   id: string;
@@ -29,11 +30,15 @@ export default function AdminUsersPage() {
     const supabase = createClient();
     let query = supabase.from('profiles').select('*').eq('role', 'visitor').eq('tenant_id', tenantId).order('created_at', { ascending: false });
 
-    if (statusFilter !== 'all') {
+    const VALID_STATUSES = ['completed', 'in_progress'];
+    if (statusFilter !== 'all' && VALID_STATUSES.includes(statusFilter)) {
       query = query.eq('completion_status', statusFilter);
     }
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+      const sanitized = sanitizeSearchInput(search);
+      if (sanitized) {
+        query = query.or(`full_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
+      }
     }
 
     const { data } = await query.limit(50);
@@ -47,7 +52,7 @@ export default function AdminUsersPage() {
   }, [loadUsers]);
 
   const handleExport = () => {
-    window.open(`/api/admin/export/users?status=${statusFilter}&search=${search}&tenant_id=${tenantId}`, '_blank');
+    window.open(`/api/admin/export/users?status=${statusFilter}&search=${encodeURIComponent(search)}&tenant_id=${tenantId}`, '_blank');
   };
 
   return (

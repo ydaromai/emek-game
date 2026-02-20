@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getTenant } from '@/lib/tenant';
+import { validateBranding } from '@/lib/sanitize';
 import type { Tenant } from '@/types/database';
 
 async function verifyAdminAndGetTenant() {
@@ -61,6 +62,15 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Invalid branding data' }, { status: 400 });
     }
 
+    // Strict schema validation
+    const validation = validateBranding(branding);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: 'Invalid branding data', details: validation.errors },
+        { status: 400 }
+      );
+    }
+
     const adminClient = createAdminClient();
     const { data, error } = await adminClient
       .from('tenants')
@@ -70,7 +80,8 @@ export async function PATCH(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Branding update failed:', error.message);
+      return NextResponse.json({ error: 'Failed to update branding' }, { status: 500 });
     }
 
     return NextResponse.json({ branding: data.branding });

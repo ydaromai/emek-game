@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { validateBranding } from '@/lib/sanitize';
 
 async function verifySuperAdmin() {
   const supabase = await createClient();
@@ -79,7 +81,24 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
     if (contact_email !== undefined) updates.contact_email = contact_email;
     if (is_active !== undefined) updates.is_active = is_active;
-    if (branding !== undefined) updates.branding = branding;
+    if (branding !== undefined) {
+      if (branding !== null) {
+        if (typeof branding !== 'object' || Array.isArray(branding)) {
+          return NextResponse.json(
+            { error: 'Branding must be an object or null' },
+            { status: 400 }
+          );
+        }
+        const validation = validateBranding(branding);
+        if (!validation.valid) {
+          return NextResponse.json(
+            { error: 'Invalid branding data', details: validation.errors },
+            { status: 400 }
+          );
+        }
+      }
+      updates.branding = branding;
+    }
 
     const { data: tenant, error } = await adminClient
       .from('tenants')
@@ -89,7 +108,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Failed to update tenant:', error.message);
+      return NextResponse.json({ error: 'Failed to update tenant' }, { status: 500 });
     }
 
     return NextResponse.json({ tenant });
@@ -111,7 +131,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       .eq('id', id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Failed to delete tenant:', error.message);
+      return NextResponse.json({ error: 'Failed to delete tenant' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

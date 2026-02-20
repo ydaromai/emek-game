@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { getTenant } from '@/lib/tenant';
+import { sanitizeSearchInput, escapeCSVField } from '@/lib/sanitize';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
   const { data: membership } = await supabase
     .from('tenant_memberships')
     .select('role')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('tenant_id', tenantId)
     .single();
 
@@ -46,25 +47,29 @@ export async function GET(request: NextRequest) {
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
 
-  if (status && status !== 'all') {
+  const VALID_STATUSES = ['completed', 'in_progress'];
+  if (status && status !== 'all' && VALID_STATUSES.includes(status)) {
     query = query.eq('completion_status', status);
   }
   if (search) {
-    query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+    const sanitized = sanitizeSearchInput(search);
+    if (sanitized) {
+      query = query.or(`full_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%`);
+    }
   }
 
   const { data: users } = await query;
 
-  // Build CSV
+  // Build CSV with proper escaping
   const header = 'שם,טלפון,אימייל,סטטוס,תאריך השלמה,תאריך הרשמה';
   const rows = (users || []).map((u) =>
     [
-      u.full_name,
-      u.phone,
-      u.email,
-      u.completion_status === 'completed' ? 'הושלם' : 'בתהליך',
-      u.completed_at ? new Date(u.completed_at).toLocaleDateString('he-IL') : '',
-      new Date(u.created_at).toLocaleDateString('he-IL'),
+      escapeCSVField(u.full_name),
+      escapeCSVField(u.phone),
+      escapeCSVField(u.email),
+      escapeCSVField(u.completion_status === 'completed' ? 'הושלם' : 'בתהליך'),
+      escapeCSVField(u.completed_at ? new Date(u.completed_at).toLocaleDateString('he-IL') : ''),
+      escapeCSVField(new Date(u.created_at).toLocaleDateString('he-IL')),
     ].join(',')
   );
 

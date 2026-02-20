@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 async function verifySuperAdmin() {
   const supabase = await createClient();
@@ -34,7 +35,8 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (membershipsError) {
-      return NextResponse.json({ error: membershipsError.message }, { status: 500 });
+      console.error('Failed to fetch memberships:', membershipsError.message);
+      return NextResponse.json({ error: 'Failed to fetch memberships' }, { status: 500 });
     }
 
     // Fetch all tenants for the dropdown and name resolution
@@ -44,7 +46,8 @@ export async function GET() {
       .order('name');
 
     if (tenantsError) {
-      return NextResponse.json({ error: tenantsError.message }, { status: 500 });
+      console.error('Failed to fetch tenants:', tenantsError.message);
+      return NextResponse.json({ error: 'Failed to fetch tenants' }, { status: 500 });
     }
 
     // Fetch profiles for email resolution
@@ -57,7 +60,8 @@ export async function GET() {
         .in('user_id', userIds);
 
       if (profilesError) {
-        return NextResponse.json({ error: profilesError.message }, { status: 500 });
+        console.error('Failed to fetch profiles:', profilesError.message);
+        return NextResponse.json({ error: 'Failed to fetch profiles' }, { status: 500 });
       }
       profiles = profilesData || [];
     }
@@ -113,29 +117,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
-    // Check if user exists by email in auth.users
-    const { data: authUsersData } = await adminClient.auth.admin.listUsers();
-    const existingUser = authUsersData?.users?.find(
-      (u) => u.email?.toLowerCase() === email.toLowerCase()
-    );
+    // Try to create user first — if they already exist, createUser returns an error
+    const tempPassword = `Temp${crypto.randomUUID()}!`;
+    const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+    });
 
     let userId: string;
+    let isExistingUser = false;
 
-    if (existingUser) {
-      userId = existingUser.id;
-    } else {
-      // Create user with temp password
-      const tempPassword = `Temp${Math.random().toString(36).slice(2, 10)}!${Date.now()}`;
-      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-        email,
-        password: tempPassword,
-        email_confirm: true,
-      });
+    if (createError?.message?.includes('already been registered')) {
+      // User exists — look up by email via profiles table (avoids unbounded listUsers)
+      isExistingUser = true;
+      const { data: existingProfile } = await adminClient
+        .from('profiles')
+        .select('user_id')
+        .eq('email', email)
+        .single();
 
-      if (createError || !newUser?.user) {
-        return NextResponse.json({ error: createError?.message || 'Failed to create user' }, { status: 500 });
+      if (!existingProfile) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
-
+      userId = existingProfile.user_id;
+    } else if (createError || !newUser?.user) {
+      console.error('Failed to create user:', createError?.message);
+      return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+    } else {
       userId = newUser.user.id;
     }
 
@@ -180,10 +189,12 @@ export async function POST(request: Request) {
             });
 
           if (retryError) {
-            return NextResponse.json({ error: retryError.message }, { status: 500 });
+            console.error('Failed to create profile (retry):', retryError.message);
+            return NextResponse.json({ error: 'Failed to create member profile' }, { status: 500 });
           }
         } else {
-          return NextResponse.json({ error: profileError.message }, { status: 500 });
+          console.error('Failed to create profile:', profileError.message);
+          return NextResponse.json({ error: 'Failed to create member profile' }, { status: 500 });
         }
       }
     }
@@ -205,7 +216,8 @@ export async function POST(request: Request) {
         .eq('tenant_id', tenant_id);
 
       if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 });
+        console.error('Failed to update membership:', updateError.message);
+        return NextResponse.json({ error: 'Failed to update membership' }, { status: 500 });
       }
 
       return NextResponse.json({
@@ -222,12 +234,13 @@ export async function POST(request: Request) {
       .single();
 
     if (membershipError) {
-      return NextResponse.json({ error: membershipError.message }, { status: 500 });
+      console.error('Failed to create membership:', membershipError.message);
+      return NextResponse.json({ error: 'Failed to create membership' }, { status: 500 });
     }
 
     return NextResponse.json({
       membership: { ...membership, email, tenant_name: tenant.name },
-      message: existingUser ? 'Membership created for existing user' : 'User created and membership assigned',
+      message: isExistingUser ? 'Membership created for existing user' : 'User created and membership assigned',
     }, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
