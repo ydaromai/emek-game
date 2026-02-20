@@ -277,8 +277,10 @@ test.describe('Full game flow', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.describe('Admin flow', () => {
-  const adminEmail = process.env.ADMIN_EMAIL || 'ydarom@gmail.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'Kokol000!';
+  const adminEmail = process.env.E2E_ADMIN_EMAIL;
+  const adminPassword = process.env.E2E_ADMIN_PASSWORD;
+
+  test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASSWORD, 'Admin E2E credentials not configured — set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD');
 
   async function adminLogin(page: Page) {
     await page.goto(`/admin/login${TENANT_PARAM}`);
