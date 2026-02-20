@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useTenant } from '@/components/TenantProvider';
 import Image from 'next/image';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -27,6 +28,7 @@ export default function EditAnimalPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const tenant = useTenant();
 
   const [form, setForm] = useState({
     name_he: '',
@@ -53,7 +55,12 @@ export default function EditAnimalPage() {
 
   async function loadAnimal() {
     const supabase = createClient();
-    const { data } = await supabase.from('animals').select('*').eq('id', id).single();
+    const { data } = await supabase
+      .from('animals')
+      .select('*')
+      .eq('id', id)
+      .eq('tenant_id', tenant.id)
+      .single();
     if (data) {
       setForm({
         name_he: data.name_he,
@@ -66,6 +73,9 @@ export default function EditAnimalPage() {
       });
       setImageUrl(data.image_url);
       setVideoUrl(data.video_url);
+    } else {
+      router.push('/admin/animals');
+      return;
     }
     setLoading(false);
   }
@@ -74,7 +84,11 @@ export default function EditAnimalPage() {
     e.preventDefault();
     setSaving(true);
     const supabase = createClient();
-    await supabase.from('animals').update(form).eq('id', id);
+    await supabase
+      .from('animals')
+      .update(form)
+      .eq('id', id)
+      .eq('tenant_id', tenant.id);
     setSaving(false);
     router.push('/admin/animals');
   }

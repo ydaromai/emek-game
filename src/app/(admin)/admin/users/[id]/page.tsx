@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from '@/lib/auth';
+import { resolveTenant } from '@/lib/tenant';
 import Card from '@/components/ui/Card';
 import ProgressBar from '@/components/ui/ProgressBar';
 
@@ -8,7 +9,12 @@ interface Props {
 }
 
 export default async function AdminUserDetailPage({ params }: Props) {
-  await requireAdmin();
+  const tenant = await resolveTenant();
+  if (!tenant) {
+    return <div className="text-center py-10 text-deep-green/50">Tenant context required</div>;
+  }
+
+  await requireAdmin(tenant.id);
   const { id } = await params;
   const supabase = await createClient();
 
@@ -16,6 +22,7 @@ export default async function AdminUserDetailPage({ params }: Props) {
     .from('profiles')
     .select('*')
     .eq('id', id)
+    .eq('tenant_id', tenant.id)
     .single();
 
   if (!user) {
@@ -26,17 +33,20 @@ export default async function AdminUserDetailPage({ params }: Props) {
     .from('user_progress')
     .select('*, animals(name_he, order_index)')
     .eq('user_id', id)
+    .eq('tenant_id', tenant.id)
     .order('scanned_at');
 
   const { count: totalActive } = await supabase
     .from('animals')
     .select('*', { count: 'exact', head: true })
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .eq('tenant_id', tenant.id);
 
   const { data: redemption } = await supabase
     .from('redemptions')
     .select('*')
     .eq('user_id', id)
+    .eq('tenant_id', tenant.id)
     .single();
 
   return (
