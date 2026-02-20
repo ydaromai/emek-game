@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import { useTenant } from '@/components/TenantProvider';
 
 interface VerifyResult {
   status: 'valid' | 'redeemed' | 'not_found';
@@ -14,6 +15,7 @@ interface VerifyResult {
 }
 
 export default function VerifyPrizePage() {
+  const { id: tenantId } = useTenant();
   const [code, setCode] = useState('');
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,6 +30,7 @@ export default function VerifyPrizePage() {
       .from('redemptions')
       .select('*, profiles(full_name)')
       .eq('redemption_code', code.toUpperCase().trim())
+      .eq('tenant_id', tenantId)
       .single();
 
     if (!redemption) {
@@ -54,7 +57,8 @@ export default function VerifyPrizePage() {
     await supabase
       .from('redemptions')
       .update({ redeemed: true, redeemed_at: new Date().toISOString() })
-      .eq('redemption_code', code.toUpperCase().trim());
+      .eq('redemption_code', code.toUpperCase().trim())
+      .eq('tenant_id', tenantId);
 
     setResult({
       status: 'redeemed',

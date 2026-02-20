@@ -1,99 +1,45 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { getTenant } from '@/lib/tenant';
+import { requireAdmin } from '@/lib/auth';
+import { AdminShell } from './AdminShell';
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { useEffect, useState } from 'react';
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers();
+  const slug = headersList.get('x-tenant-slug');
 
-const navItems = [
-  { href: '/admin/dashboard', label: 'לוח בקרה', icon: '📊' },
-  { href: '/admin/users', label: 'משתמשים', icon: '👥' },
-  { href: '/admin/animals', label: 'תחנות', icon: '🦎' },
-  { href: '/admin/verify-prize', label: 'אימות פרס', icon: '🎁' },
-  { href: '/admin/content', label: 'תוכן', icon: '📝' },
-];
-
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [userName, setUserName] = useState('');
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        supabase.from('profiles').select('full_name').eq('id', user.id).single()
-          .then(({ data }) => { if (data) setUserName(data.full_name); });
-      }
-    });
-  }, []);
-
-  // Don't show admin shell on login page
-  if (pathname === '/admin/login') {
-    return <>{children}</>;
+  if (!slug) {
+    redirect('/');
   }
 
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/admin/login');
-  };
+  const tenant = await getTenant(slug);
+  if (!tenant) {
+    redirect('/');
+  }
+
+  // Detect login page via middleware-set pathname header to skip auth check
+  // (unauthenticated users must be able to reach the login page)
+  const pathname = headersList.get('x-next-pathname') ?? '';
+  const isLoginPage = pathname === '/admin/login';
+
+  let userRole: 'admin' | 'staff' | 'super_admin' = 'staff';
+
+  if (!isLoginPage) {
+    const { role } = await requireAdmin(tenant.id);
+    userRole = role;
+  }
 
   return (
-    <div className="min-h-screen bg-nature-light">
-      {/* Top bar */}
-      <header className="bg-nature-dark text-white px-4 py-3 flex items-center justify-between">
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center"
-        >
-          ☰
-        </button>
-        <h1 className="text-lg font-bold">ניהול פארק המעיינות</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-sm hidden sm:inline">{userName}</span>
-          <button onClick={handleLogout} className="text-sm underline min-h-[44px] px-2">
-            יציאה
-          </button>
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* Sidebar */}
-        <nav className={`
-          ${menuOpen ? 'block' : 'hidden'} md:block
-          w-56 bg-white border-l border-deep-green/10 min-h-[calc(100vh-52px)]
-          fixed md:static z-10
-        `}>
-          <ul className="py-2">
-            {navItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={() => setMenuOpen(false)}
-                  className={`
-                    block px-4 py-3 text-sm font-medium min-h-[44px]
-                    flex items-center gap-2
-                    ${pathname === item.href
-                      ? 'bg-turquoise/10 text-turquoise border-l-3 border-turquoise'
-                      : 'text-deep-green hover:bg-sand/50'
-                    }
-                  `}
-                >
-                  <span>{item.icon}</span>
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* Main content */}
-        <main className="flex-1 p-4 md:p-6">
-          {children}
-        </main>
-      </div>
-    </div>
+    <AdminShell
+      tenant={{
+        id: tenant.id,
+        name: tenant.name,
+        slug: tenant.slug,
+        branding: tenant.branding,
+      }}
+      userRole={userRole}
+    >
+      {children}
+    </AdminShell>
   );
 }

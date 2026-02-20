@@ -32,27 +32,9 @@ export default function AdminLoginPage() {
       return;
     }
 
-    // Verify admin/staff role
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setError('שגיאה באימות');
-      setLoading(false);
-      return;
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile || !['admin', 'staff'].includes(profile.role)) {
-      await supabase.auth.signOut();
-      setError('אין לך הרשאות גישה לממשק הניהול');
-      setLoading(false);
-      return;
-    }
-
+    // After successful auth, redirect to dashboard.
+    // The server layout will verify tenant membership on the next render.
+    // If the user has no membership for this tenant, requireAdmin() will redirect back.
     router.push('/admin/dashboard');
   };
 
