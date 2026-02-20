@@ -114,29 +114,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
-    // Check if user exists by email in auth.users
-    const { data: authUsersData } = await adminClient.auth.admin.listUsers();
-    const existingUser = authUsersData?.users?.find(
-      (u) => u.email?.toLowerCase() === email.toLowerCase()
-    );
+    // Try to create user first — if they already exist, createUser returns an error
+    const tempPassword = `Temp${crypto.randomUUID()}!`;
+    const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+    });
 
     let userId: string;
+    let isExistingUser = false;
 
-    if (existingUser) {
-      userId = existingUser.id;
-    } else {
-      // Create user with temp password
-      const tempPassword = `Temp${crypto.randomUUID().slice(0, 8)}!${Date.now()}`;
-      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-        email,
-        password: tempPassword,
-        email_confirm: true,
-      });
+    if (createError?.message?.includes('already been registered')) {
+      // User exists — look up by email via profiles table (avoids unbounded listUsers)
+      isExistingUser = true;
+      const { data: existingProfile } = await adminClient
+        .from('profiles')
+        .select('user_id')
+        .eq('email', email)
+        .single();
 
-      if (createError || !newUser?.user) {
-        return NextResponse.json({ error: createError?.message || 'Failed to create user' }, { status: 500 });
+      if (!existingProfile) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
-
+      userId = existingProfile.user_id;
+    } else if (createError || !newUser?.user) {
+      return NextResponse.json({ error: createError?.message || 'Failed to create user' }, { status: 500 });
+    } else {
       userId = newUser.user.id;
     }
 
@@ -228,7 +232,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       membership: { ...membership, email, tenant_name: tenant.name },
-      message: existingUser ? 'Membership created for existing user' : 'User created and membership assigned',
+      message: isExistingUser ? 'Membership created for existing user' : 'User created and membership assigned',
     }, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
