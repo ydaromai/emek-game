@@ -1,0 +1,71 @@
+# CI Pipeline for Park Wildlife Quest Game
+# Runs on every pull request targeting the main branch.
+#
+# --- Required GitHub Secrets ---------------------------------------------------
+#
+# NEXT_PUBLIC_SUPABASE_URL       - Supabase project URL (e.g. https://xyz.supabase.co)
+#                                  Falls back to a placeholder so lint/test/build
+#                                  can pass without a live Supabase instance.
+#
+# NEXT_PUBLIC_SUPABASE_ANON_KEY  - Supabase anonymous (public) key.
+#                                  Falls back to a placeholder for the same reason.
+#
+# E2E_ADMIN_EMAIL                - Email for the admin user used in Playwright E2E
+#                                  tests. The e2e job is skipped when this is empty.
+#
+# E2E_ADMIN_PASSWORD             - Password for the E2E admin user.
+#
+# E2E_VISITOR_PASSWORD           - Password for the E2E visitor user.
+#
+# Note: Enable branch protection in GitHub Settings > Branches to require
+# the "quality" status check to pass before merging.
+# -------------------------------------------------------------------------------
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  # -- Quality gate: lint, unit tests, production build -----------------------
+  quality:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  # -- E2E tests (Playwright) - only when secrets are configured --------------
+  e2e:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.E2E_ADMIN_EMAIL != '' }}
+    needs: quality
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_VISITOR_PASSWORD: ${{ secrets.E2E_VISITOR_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
