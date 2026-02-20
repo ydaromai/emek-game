@@ -74,7 +74,7 @@ describe('ScanPage', () => {
     );
   });
 
-  it('renders error when animal not found for tenant', async () => {
+  it('renders not-found error when animal not found for tenant', async () => {
     mockResolveTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
     mockGetAuthUser.mockResolvedValue({ id: 'u1' });
 
@@ -88,9 +88,12 @@ describe('ScanPage', () => {
 
     expect(result).toBeTruthy();
     expect(mockRedirect).not.toHaveBeenCalled();
+    // Verify error content includes "not found" message
+    const rendered = JSON.stringify(result);
+    expect(rendered).toContain('תחנה לא נמצאה');
   });
 
-  it('renders error when animal is inactive', async () => {
+  it('renders inactive error when animal is inactive', async () => {
     mockResolveTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
     mockGetAuthUser.mockResolvedValue({ id: 'u1' });
 
@@ -108,6 +111,9 @@ describe('ScanPage', () => {
 
     expect(result).toBeTruthy();
     expect(mockRedirect).not.toHaveBeenCalled();
+    // Verify error content indicates station is inactive
+    const rendered = JSON.stringify(result);
+    expect(rendered).toContain('לא פעילה');
   });
 
   it('records progress and redirects for valid scan', async () => {

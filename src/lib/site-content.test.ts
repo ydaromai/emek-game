@@ -112,6 +112,27 @@ describe('site-content', () => {
       expect(result.landing_subtitle).toBe('מסע חיות הבר');
     });
 
+    it('returns defaults when DB returns empty array', async () => {
+      const qb = createListQueryBuilder([]);
+      mockFrom.mockReturnValue(qb);
+
+      const { getAllSiteContent } = await import('@/lib/site-content');
+      const result = await getAllSiteContent();
+
+      expect(result.landing_title).toBe('פארק המעיינות');
+      expect(result.landing_subtitle).toBe('מסע חיות הבר');
+    });
+
+    it('returns defaults when DB returns null data', async () => {
+      const qb = createListQueryBuilder(null);
+      mockFrom.mockReturnValue(qb);
+
+      const { getAllSiteContent } = await import('@/lib/site-content');
+      const result = await getAllSiteContent();
+
+      expect(result.landing_title).toBe('פארק המעיינות');
+    });
+
     it('returns only defaults when DB query fails', async () => {
       mockFrom.mockImplementation(() => {
         throw new Error('DB error');

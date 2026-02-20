@@ -25,4 +25,15 @@ describe('supabase/client', () => {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     );
   });
+
+  it('calls createBrowserClient on every invocation', async () => {
+    const { createBrowserClient } = await import('@supabase/ssr');
+    const { createClient } = await import('@/lib/supabase/client');
+
+    const callsBefore = (createBrowserClient as ReturnType<typeof vi.fn>).mock.calls.length;
+    createClient();
+    const callsAfter = (createBrowserClient as ReturnType<typeof vi.fn>).mock.calls.length;
+
+    expect(callsAfter).toBe(callsBefore + 1);
+  });
 });

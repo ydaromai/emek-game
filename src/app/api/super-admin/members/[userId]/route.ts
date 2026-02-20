@@ -43,7 +43,8 @@ export async function DELETE(
       .eq('tenant_id', tenantId);
 
     if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
+      console.error('Failed to revoke membership:', deleteError.message);
+      return NextResponse.json({ error: 'Failed to revoke membership' }, { status: 500 });
     }
 
     return NextResponse.json({ message: 'Membership revoked' });

@@ -182,11 +182,10 @@ test.describe('Cross-tenant RLS enforcement', () => {
     await page.goto(`/scan/${tenantBAnimal.qr_token}?tenant=${tenantA.slug}`);
 
     // Should show "station not found" error (not the animal page)
-    const errorVisible = await page.getByText('תחנה לא נמצאה').isVisible().catch(() => false);
     const redirectedToAnimal = page.url().includes('/animal/');
 
-    // Either shows error or doesn't navigate to the animal page
-    expect(errorVisible || !redirectedToAnimal).toBeTruthy();
+    // Cross-tenant scan must not show the animal page
+    expect(redirectedToAnimal).toBe(false);
   });
 
   test('admin of tenant A cannot view tenant B user details via UI', async ({ page }) => {

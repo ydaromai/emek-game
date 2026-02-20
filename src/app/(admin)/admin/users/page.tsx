@@ -30,7 +30,8 @@ export default function AdminUsersPage() {
     const supabase = createClient();
     let query = supabase.from('profiles').select('*').eq('role', 'visitor').eq('tenant_id', tenantId).order('created_at', { ascending: false });
 
-    if (statusFilter !== 'all') {
+    const VALID_STATUSES = ['completed', 'in_progress'];
+    if (statusFilter !== 'all' && VALID_STATUSES.includes(statusFilter)) {
       query = query.eq('completion_status', statusFilter);
     }
     if (search) {

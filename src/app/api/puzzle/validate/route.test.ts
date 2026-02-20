@@ -206,5 +206,7 @@ describe('POST /api/puzzle/validate', () => {
     expect(json.redemption_code).toBeDefined();
     expect(typeof json.redemption_code).toBe('string');
     expect(json.redemption_code.length).toBe(8);
+    // Verify redemption code only contains chars from the expected CSPRNG charset
+    expect(json.redemption_code).toMatch(/^[A-Z0-9]{8}$/);
   });
 });

@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 interface TenantSuspendedPageProps {
   searchParams: Promise<{ name?: string }>;
 }
@@ -16,12 +18,12 @@ export default async function TenantSuspendedPage({ searchParams }: TenantSuspen
         <p className="text-lg mb-6 opacity-70">
           הפארק שאליו ניסית לגשת אינו פעיל כרגע. נסה שוב מאוחר יותר.
         </p>
-        <a
-          href="https://realife.vercel.app"
+        <Link
+          href="/"
           className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-medium hover:opacity-90 transition-opacity"
         >
           חזרה לדף הראשי
-        </a>
+        </Link>
       </div>
     </div>
   );

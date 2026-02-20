@@ -28,7 +28,10 @@ export async function getProfile(userId: string, tenantId?: string): Promise<Pro
   return data;
 }
 
-export async function requireAdmin(tenantId?: string) {
+export async function requireAdmin(tenantId?: string | undefined) {
+  if (!tenantId && process.env.NODE_ENV === 'development') {
+    console.warn('requireAdmin() called without tenantId — admin check is not tenant-scoped');
+  }
   const user = await requireAuth('/admin/login');
   const supabase = await createClient();
 

@@ -36,4 +36,15 @@ describe('supabase/admin', () => {
     expect(client1).toBeDefined();
     expect(client2).toBeDefined();
   });
+
+  it('calls createClient on every invocation', async () => {
+    const { createClient: mockCreate } = await import('@supabase/supabase-js');
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+
+    const callsBefore = (mockCreate as ReturnType<typeof vi.fn>).mock.calls.length;
+    createAdminClient();
+    const callsAfter = (mockCreate as ReturnType<typeof vi.fn>).mock.calls.length;
+
+    expect(callsAfter).toBe(callsBefore + 1);
+  });
 });

@@ -131,7 +131,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       .eq('id', id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Failed to delete tenant:', error.message);
+      return NextResponse.json({ error: 'Failed to delete tenant' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

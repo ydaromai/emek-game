@@ -17,6 +17,9 @@
 #
 # E2E_VISITOR_PASSWORD           - Password for the E2E visitor user.
 #
+# SUPABASE_SERVICE_ROLE_KEY      - Supabase service role key (required by E2E
+#                                  helpers for test user setup/teardown).
+#
 # --- Required GitHub Repository Variables ------------------------------------
 #
 # ENABLE_E2E                     - Set to "true" to enable the E2E job.
@@ -65,6 +68,8 @@ jobs:
       E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       E2E_VISITOR_PASSWORD: ${{ secrets.E2E_VISITOR_PASSWORD }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SITE_URL: ${{ secrets.SITE_URL || 'http://localhost:3000' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -75,4 +80,4 @@ jobs:
 
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test
+      - run: npm run build && npx playwright test

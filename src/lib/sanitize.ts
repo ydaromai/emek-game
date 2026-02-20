@@ -75,7 +75,7 @@ const OPTIONAL_URL_FIELDS = ['logo_url', 'bg_image_url'] as const;
 
 const OPTIONAL_STRING_FIELDS = ['font_family'] as const;
 
-const HEX_COLOR_RE = /^#[0-9a-fA-F]{3,8}$/;
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 const SAFE_FONT_FAMILY_RE = /^[a-zA-Z0-9\s\-,.']+$/;
 
 const ALLOWED_FIELDS = new Set<string>([

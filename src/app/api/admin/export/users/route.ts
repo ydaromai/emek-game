@@ -47,7 +47,8 @@ export async function GET(request: NextRequest) {
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
 
-  if (status && status !== 'all') {
+  const VALID_STATUSES = ['completed', 'in_progress'];
+  if (status && status !== 'all' && VALID_STATUSES.includes(status)) {
     query = query.eq('completion_status', status);
   }
   if (search) {
