@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import { useTenant } from '@/components/TenantProvider';
 
 interface UserRow {
   id: string;
@@ -17,6 +18,7 @@ interface UserRow {
 }
 
 export default function AdminUsersPage() {
+  const { id: tenantId } = useTenant();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -25,7 +27,7 @@ export default function AdminUsersPage() {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
-    let query = supabase.from('profiles').select('*').eq('role', 'visitor').order('created_at', { ascending: false });
+    let query = supabase.from('profiles').select('*').eq('role', 'visitor').eq('tenant_id', tenantId).order('created_at', { ascending: false });
 
     if (statusFilter !== 'all') {
       query = query.eq('completion_status', statusFilter);
@@ -37,7 +39,7 @@ export default function AdminUsersPage() {
     const { data } = await query.limit(50);
     setUsers(data || []);
     setLoading(false);
-  }, [search, statusFilter]);
+  }, [search, statusFilter, tenantId]);
 
   useEffect(() => {
     const timer = setTimeout(loadUsers, 300);
@@ -45,7 +47,7 @@ export default function AdminUsersPage() {
   }, [loadUsers]);
 
   const handleExport = () => {
-    window.open(`/api/admin/export/users?status=${statusFilter}&search=${search}`, '_blank');
+    window.open(`/api/admin/export/users?status=${statusFilter}&search=${search}&tenant_id=${tenantId}`, '_blank');
   };
 
   return (

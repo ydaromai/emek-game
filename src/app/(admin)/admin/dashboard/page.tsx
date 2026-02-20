@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
+import { useTenant } from '@/components/TenantProvider';
 
 interface Analytics {
   totalUsers: number;
@@ -11,13 +12,14 @@ interface Analytics {
 }
 
 export default function AdminDashboardPage() {
+  const { id: tenantId } = useTenant();
   const [data, setData] = useState<Analytics | null>(null);
 
   useEffect(() => {
-    fetch('/api/admin/analytics')
+    fetch(`/api/admin/analytics?tenant_id=${tenantId}`)
       .then((r) => r.json())
       .then(setData);
-  }, []);
+  }, [tenantId]);
 
   if (!data) return <p className="text-center py-10 text-deep-green/50">טוען...</p>;
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { useTenant } from '@/components/TenantProvider';
 
 interface SiteContentRow {
   id: string;
@@ -18,6 +19,7 @@ interface RowFeedback {
 }
 
 export default function AdminContentPage() {
+  const { id: tenantId } = useTenant();
   const [rows, setRows] = useState<SiteContentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
@@ -26,13 +28,14 @@ export default function AdminContentPage() {
 
   useEffect(() => {
     loadContent();
-  }, []);
+  }, [tenantId]);
 
   async function loadContent() {
     const supabase = createClient();
     const { data } = await supabase
       .from('site_content')
       .select('id, content_key, content_value, description')
+      .eq('tenant_id', tenantId)
       .order('content_key');
     setRows(data || []);
     const initial: Record<string, string> = {};

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import { useTenant } from '@/components/TenantProvider';
 
 interface AnimalRow {
   id: string;
@@ -16,16 +17,18 @@ interface AnimalRow {
 }
 
 export default function AdminAnimalsPage() {
+  const { id: tenantId } = useTenant();
   const [animals, setAnimals] = useState<AnimalRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadAnimals(); }, []);
+  useEffect(() => { loadAnimals(); }, [tenantId]);
 
   async function loadAnimals() {
     const supabase = createClient();
     const { data } = await supabase
       .from('animals')
       .select('id, name_he, letter, order_index, is_active, qr_token')
+      .eq('tenant_id', tenantId)
       .order('order_index');
     setAnimals(data || []);
     setLoading(false);
@@ -33,7 +36,7 @@ export default function AdminAnimalsPage() {
 
   async function toggleActive(id: string, current: boolean) {
     const supabase = createClient();
-    await supabase.from('animals').update({ is_active: !current }).eq('id', id);
+    await supabase.from('animals').update({ is_active: !current }).eq('id', id).eq('tenant_id', tenantId);
     setAnimals((prev) => prev.map((a) => a.id === id ? { ...a, is_active: !current } : a));
   }
 

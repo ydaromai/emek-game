@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getTenant } from '@/lib/tenant';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+
+async function resolveTenantFromHeaders() {
+  const headersList = await headers();
+  const slug = headersList.get('x-tenant-slug');
+  if (!slug) return null;
+  return getTenant(slug);
+}
 
 export async function POST(
   request: NextRequest,
@@ -17,14 +26,35 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
+  // Resolve tenant
+  const tenant = await resolveTenantFromHeaders();
+  if (!tenant) {
+    return NextResponse.json({ error: 'No tenant context' }, { status: 400 });
+  }
+  const tenantId = tenant.id;
+
+  // Verify admin membership for this tenant
+  const { data: membership } = await supabase
+    .from('tenant_memberships')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('user_id', session.user.id)
+    .eq('tenant_id', tenantId)
     .single();
 
-  if (!profile || profile.role !== 'admin') {
+  if (!membership || membership.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  // Verify animal belongs to this tenant
+  const { data: animal } = await supabase
+    .from('animals')
+    .select('image_url, video_url, tenant_id')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single();
+
+  if (!animal) {
+    return NextResponse.json({ error: 'Animal not found in this tenant' }, { status: 404 });
   }
 
   const formData = await request.formData();
@@ -42,19 +72,16 @@ export async function POST(
 
   const bucket = type === 'image' ? 'animal-images' : 'animal-videos';
   const ext = file.name.split('.').pop();
-  const path = `${id}/${Date.now()}.${ext}`;
+  const path = `${tenantId}/${id}/${Date.now()}.${ext}`;
 
   const adminClient = createAdminClient();
 
   // Delete old file if exists
-  const { data: animal } = await supabase.from('animals').select('image_url, video_url').eq('id', id).single();
-  if (animal) {
-    const oldUrl = type === 'image' ? animal.image_url : animal.video_url;
-    if (oldUrl) {
-      const oldPath = oldUrl.split(`${bucket}/`).pop();
-      if (oldPath) {
-        await adminClient.storage.from(bucket).remove([oldPath]);
-      }
+  const oldUrl = type === 'image' ? animal.image_url : animal.video_url;
+  if (oldUrl) {
+    const oldPath = oldUrl.split(`${bucket}/`).pop();
+    if (oldPath) {
+      await adminClient.storage.from(bucket).remove([oldPath]);
     }
   }
 
@@ -72,7 +99,7 @@ export async function POST(
 
   // Update animal record
   const updateField = type === 'image' ? 'image_url' : 'video_url';
-  await adminClient.from('animals').update({ [updateField]: publicUrl }).eq('id', id);
+  await adminClient.from('animals').update({ [updateField]: publicUrl }).eq('id', id).eq('tenant_id', tenantId);
 
   return NextResponse.json({ url: publicUrl });
 }
@@ -89,13 +116,22 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
+  // Resolve tenant
+  const tenant = await resolveTenantFromHeaders();
+  if (!tenant) {
+    return NextResponse.json({ error: 'No tenant context' }, { status: 400 });
+  }
+  const tenantId = tenant.id;
+
+  // Verify admin membership for this tenant
+  const { data: membership } = await supabase
+    .from('tenant_memberships')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('user_id', session.user.id)
+    .eq('tenant_id', tenantId)
     .single();
 
-  if (!profile || profile.role !== 'admin') {
+  if (!membership || membership.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -108,7 +144,14 @@ export async function DELETE(
   const bucket = type === 'image' ? 'animal-images' : 'animal-videos';
   const urlField = type === 'image' ? 'image_url' : 'video_url';
 
-  const { data: animal } = await supabase.from('animals').select('image_url, video_url').eq('id', id).single();
+  // Verify animal belongs to this tenant
+  const { data: animal } = await supabase
+    .from('animals')
+    .select('image_url, video_url')
+    .eq('id', id)
+    .eq('tenant_id', tenantId)
+    .single();
+
   if (animal) {
     const oldUrl = animal[urlField];
     if (oldUrl) {
@@ -121,7 +164,7 @@ export async function DELETE(
   }
 
   const adminClient = createAdminClient();
-  await adminClient.from('animals').update({ [urlField]: null }).eq('id', id);
+  await adminClient.from('animals').update({ [urlField]: null }).eq('id', id).eq('tenant_id', tenantId);
 
   return NextResponse.json({ success: true });
 }

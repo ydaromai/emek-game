@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { getTenant } from '@/lib/tenant';
 
 export async function GET() {
   const supabase = await createClient();
@@ -9,33 +11,50 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
+  // Resolve tenant from middleware header
+  const headersList = await headers();
+  const slug = headersList.get('x-tenant-slug');
+  if (!slug) {
+    return NextResponse.json({ error: 'No tenant context' }, { status: 400 });
+  }
+  const tenant = await getTenant(slug);
+  if (!tenant) {
+    return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+  }
+  const tenantId = tenant.id;
+
+  // Verify membership
+  const { data: membership } = await supabase
+    .from('tenant_memberships')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('user_id', session.user.id)
+    .eq('tenant_id', tenantId)
     .single();
 
-  if (!profile || !['admin', 'staff'].includes(profile.role)) {
+  if (!membership || !['admin', 'staff'].includes(membership.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Total users
+  // Total users for this tenant
   const { count: totalUsers } = await supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true })
-    .eq('role', 'visitor');
+    .eq('role', 'visitor')
+    .eq('tenant_id', tenantId);
 
-  // Completed users
+  // Completed users for this tenant
   const { count: completedUsers } = await supabase
     .from('profiles')
     .select('*', { count: 'exact', head: true })
     .eq('role', 'visitor')
+    .eq('tenant_id', tenantId)
     .eq('completion_status', 'completed');
 
-  // Checkpoint distribution
+  // Checkpoint distribution for this tenant
   const { data: checkpointData } = await supabase
     .from('user_progress')
     .select('animal_id, animals(name_he, order_index)')
+    .eq('tenant_id', tenantId)
     .order('animal_id');
 
   const checkpointCounts: Record<string, { name: string; count: number; order: number }> = {};

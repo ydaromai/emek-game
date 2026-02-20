@@ -53,15 +53,21 @@ export async function middleware(request: NextRequest) {
   // ── 1. Tenant resolution ──────────────────────────────────────────
   const tenantSlug = extractTenantSlug(request);
 
+  // Set pathname header for server components to detect current route
+  request.headers.set('x-next-pathname', request.nextUrl.pathname);
+
   // Set x-tenant-slug header on the response for downstream server components
   if (tenantSlug) {
     response.headers.set('x-tenant-slug', tenantSlug);
     // Also set on request headers so server components can read via headers()
     request.headers.set('x-tenant-slug', tenantSlug);
-    // Re-create response so request header changes are forwarded
-    response = NextResponse.next({
-      request: { headers: request.headers },
-    });
+  }
+
+  // Re-create response so request header changes are forwarded
+  response = NextResponse.next({
+    request: { headers: request.headers },
+  });
+  if (tenantSlug) {
     response.headers.set('x-tenant-slug', tenantSlug);
   }
 

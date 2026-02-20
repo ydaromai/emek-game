@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { getTenant } from '@/lib/tenant';
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
@@ -9,14 +11,27 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Verify admin
-  const { data: profile } = await supabase
-    .from('profiles')
+  // Resolve tenant from middleware header
+  const headersList = await headers();
+  const slug = headersList.get('x-tenant-slug');
+  if (!slug) {
+    return NextResponse.json({ error: 'No tenant context' }, { status: 400 });
+  }
+  const tenant = await getTenant(slug);
+  if (!tenant) {
+    return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+  }
+  const tenantId = tenant.id;
+
+  // Verify admin membership for this tenant
+  const { data: membership } = await supabase
+    .from('tenant_memberships')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('user_id', session.user.id)
+    .eq('tenant_id', tenantId)
     .single();
 
-  if (!profile || profile.role !== 'admin') {
+  if (!membership || membership.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -28,6 +43,7 @@ export async function GET(request: NextRequest) {
     .from('profiles')
     .select('full_name, phone, email, completion_status, completed_at, created_at')
     .eq('role', 'visitor')
+    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false });
 
   if (status && status !== 'all') {
