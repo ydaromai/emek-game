@@ -11,7 +11,14 @@
 #                                  Falls back to a placeholder for the same reason.
 #
 # E2E_ADMIN_EMAIL                - Email for the admin user used in Playwright E2E
-#                                  tests. The e2e job is skipped when this is empty.
+#                                  tests.
+#
+# --- Required GitHub Repository Variables ------------------------------------
+#
+# ENABLE_E2E                     - Set to "true" to enable the E2E job.
+#                                  (Settings > Secrets and variables > Actions >
+#                                  Variables tab > New repository variable)
+#                                  The e2e job is skipped when this is not set.
 #
 # E2E_ADMIN_PASSWORD             - Password for the E2E admin user.
 #
@@ -47,10 +54,10 @@ jobs:
       - run: npm test
       - run: npm run build
 
-  # -- E2E tests (Playwright) - only when secrets are configured --------------
+  # -- E2E tests (Playwright) - only when ENABLE_E2E repo variable is set -----
   e2e:
     runs-on: ubuntu-latest
-    if: ${{ secrets.E2E_ADMIN_EMAIL != '' }}
+    if: ${{ vars.ENABLE_E2E == 'true' }}
     needs: quality
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
