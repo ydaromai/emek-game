@@ -10,10 +10,10 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Mock supabase server client
-const mockGetSession = vi.fn();
+const mockGetUser = vi.fn();
 const mockFrom = vi.fn();
 const mockSupabase = {
-  auth: { getSession: mockGetSession },
+  auth: { getUser: mockGetUser },
   from: mockFrom,
 };
 
@@ -39,41 +39,41 @@ describe('auth', () => {
     vi.clearAllMocks();
   });
 
-  describe('getSession', () => {
-    it('returns session when authenticated', async () => {
-      const fakeSession = { user: { id: 'user-1', email: 'a@b.com' } };
-      mockGetSession.mockResolvedValue({ data: { session: fakeSession } });
+  describe('getAuthUser', () => {
+    it('returns user when authenticated', async () => {
+      const fakeUser = { id: 'user-1', email: 'a@b.com' };
+      mockGetUser.mockResolvedValue({ data: { user: fakeUser } });
 
-      const { getSession } = await import('@/lib/auth');
-      const session = await getSession();
+      const { getAuthUser } = await import('@/lib/auth');
+      const user = await getAuthUser();
 
-      expect(session).toEqual(fakeSession);
-      expect(mockGetSession).toHaveBeenCalled();
+      expect(user).toEqual(fakeUser);
+      expect(mockGetUser).toHaveBeenCalled();
     });
 
     it('returns null when not authenticated', async () => {
-      mockGetSession.mockResolvedValue({ data: { session: null } });
+      mockGetUser.mockResolvedValue({ data: { user: null } });
 
-      const { getSession } = await import('@/lib/auth');
-      const session = await getSession();
+      const { getAuthUser } = await import('@/lib/auth');
+      const user = await getAuthUser();
 
-      expect(session).toBeNull();
+      expect(user).toBeNull();
     });
   });
 
   describe('requireAuth', () => {
-    it('returns session when authenticated', async () => {
-      const fakeSession = { user: { id: 'user-1', email: 'a@b.com' } };
-      mockGetSession.mockResolvedValue({ data: { session: fakeSession } });
+    it('returns user when authenticated', async () => {
+      const fakeUser = { id: 'user-1', email: 'a@b.com' };
+      mockGetUser.mockResolvedValue({ data: { user: fakeUser } });
 
       const { requireAuth } = await import('@/lib/auth');
-      const session = await requireAuth();
+      const user = await requireAuth();
 
-      expect(session).toEqual(fakeSession);
+      expect(user).toEqual(fakeUser);
     });
 
     it('redirects to /login when not authenticated', async () => {
-      mockGetSession.mockResolvedValue({ data: { session: null } });
+      mockGetUser.mockResolvedValue({ data: { user: null } });
 
       const { requireAuth } = await import('@/lib/auth');
 
@@ -82,7 +82,7 @@ describe('auth', () => {
     });
 
     it('redirects to /login with redirect query param when specified', async () => {
-      mockGetSession.mockResolvedValue({ data: { session: null } });
+      mockGetUser.mockResolvedValue({ data: { user: null } });
 
       const { requireAuth } = await import('@/lib/auth');
 
@@ -138,47 +138,13 @@ describe('auth', () => {
   });
 
   describe('requireAdmin', () => {
-    it('returns session, profile, and role for valid admin', async () => {
-      const fakeSession = { user: { id: 'user-1' } };
-      mockGetSession.mockResolvedValue({ data: { session: fakeSession } });
-
-      const membershipQb = createQueryBuilder(null);
-      // Override the single call to return array-like data via the query
-      // Actually, requireAdmin does NOT call .single() on memberships
-      // It just queries and gets { data: memberships }
-      // Let me re-read the code...
-      // memberships query: select('role').eq('user_id',...).eq('tenant_id',...)
-      // No .single()! It gets { data: memberships }
-      // So we need a different mock approach for that query
-
-      let callCount = 0;
-      mockFrom.mockImplementation((table: string) => {
-        if (table === 'tenant_memberships') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(function() { return this; }),
-            })),
-          };
-        }
-        // profiles table
-        return createQueryBuilder({
-          id: 'prof-1',
-          user_id: 'user-1',
-          is_super_admin: false,
-        });
-      });
-
-      // Actually let me reconsider. The memberships query chain is:
-      // supabase.from('tenant_memberships').select('role').eq('user_id', ...).eq('tenant_id', ...)
-      // This does NOT call .single() so it returns the chainable result directly.
-      // But in supabase-js, the final .eq() returns a Promise-like with { data, error }
-      // Let me create proper mocks.
+    it('returns user, profile, and role for valid admin', async () => {
+      const fakeUser = { id: 'user-1' };
+      mockGetUser.mockResolvedValue({ data: { user: fakeUser } });
 
       const membershipsBuilder: Record<string, unknown> = {};
       membershipsBuilder.select = vi.fn(() => membershipsBuilder);
       membershipsBuilder.eq = vi.fn(() => membershipsBuilder);
-      // The chain ends without .single(), so supabase returns the builder
-      // which resolves to { data, error } when awaited (it's a PromiseLike)
       membershipsBuilder.then = vi.fn((resolve: (value: unknown) => void) =>
         resolve({ data: [{ role: 'admin' }], error: null })
       );
@@ -198,12 +164,12 @@ describe('auth', () => {
       const result = await requireAdmin('tenant-1');
 
       expect(result.role).toBe('admin');
-      expect(result.session).toEqual(fakeSession);
+      expect(result.user).toEqual(fakeUser);
     });
 
     it('redirects non-admin users without membership or super_admin', async () => {
-      const fakeSession = { user: { id: 'user-1' } };
-      mockGetSession.mockResolvedValue({ data: { session: fakeSession } });
+      const fakeUser = { id: 'user-1' };
+      mockGetUser.mockResolvedValue({ data: { user: fakeUser } });
 
       const membershipsBuilder: Record<string, unknown> = {};
       membershipsBuilder.select = vi.fn(() => membershipsBuilder);
@@ -230,8 +196,8 @@ describe('auth', () => {
     });
 
     it('returns super_admin role when user is super admin with no membership', async () => {
-      const fakeSession = { user: { id: 'user-1' } };
-      mockGetSession.mockResolvedValue({ data: { session: fakeSession } });
+      const fakeUser = { id: 'user-1' };
+      mockGetUser.mockResolvedValue({ data: { user: fakeUser } });
 
       const membershipsBuilder: Record<string, unknown> = {};
       membershipsBuilder.select = vi.fn(() => membershipsBuilder);
@@ -259,23 +225,23 @@ describe('auth', () => {
   });
 
   describe('requireSuperAdmin', () => {
-    it('returns session for super admin', async () => {
-      const fakeSession = { user: { id: 'user-1' } };
-      mockGetSession.mockResolvedValue({ data: { session: fakeSession } });
+    it('returns user for super admin', async () => {
+      const fakeUser = { id: 'user-1' };
+      mockGetUser.mockResolvedValue({ data: { user: fakeUser } });
 
       const qb = createQueryBuilder({ is_super_admin: true });
       mockFrom.mockReturnValue(qb);
 
       const { requireSuperAdmin } = await import('@/lib/auth');
-      const session = await requireSuperAdmin();
+      const user = await requireSuperAdmin();
 
-      expect(session).toEqual(fakeSession);
+      expect(user).toEqual(fakeUser);
       expect(mockFrom).toHaveBeenCalledWith('profiles');
     });
 
     it('redirects non-super-admin', async () => {
-      const fakeSession = { user: { id: 'user-1' } };
-      mockGetSession.mockResolvedValue({ data: { session: fakeSession } });
+      const fakeUser = { id: 'user-1' };
+      mockGetUser.mockResolvedValue({ data: { user: fakeUser } });
 
       const qb = createQueryBuilder({ is_super_admin: false });
       mockFrom.mockReturnValue(qb);
@@ -287,8 +253,8 @@ describe('auth', () => {
     });
 
     it('redirects when profile not found', async () => {
-      const fakeSession = { user: { id: 'user-1' } };
-      mockGetSession.mockResolvedValue({ data: { session: fakeSession } });
+      const fakeUser = { id: 'user-1' };
+      mockGetUser.mockResolvedValue({ data: { user: fakeUser } });
 
       const qb = createQueryBuilder(null);
       mockFrom.mockReturnValue(qb);

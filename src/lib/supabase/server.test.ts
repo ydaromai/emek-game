@@ -95,22 +95,5 @@ describe('supabase/server', () => {
     }).not.toThrow();
   });
 
-  it('createAdminClient returns a supabase admin client instance', async () => {
-    const { createAdminClient } = await import('@/lib/supabase/server');
-    const client = createAdminClient();
-
-    expect(client).toBeDefined();
-    expect(client).toBe(mockAdminClient);
-  });
-
-  it('createAdminClient uses service role key', async () => {
-    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js');
-    const { createAdminClient } = await import('@/lib/supabase/server');
-    createAdminClient();
-
-    expect(createSupabaseClient).toHaveBeenCalledWith(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-    );
-  });
+  // createAdminClient tests are in admin.test.ts (moved to @/lib/supabase/admin)
 });

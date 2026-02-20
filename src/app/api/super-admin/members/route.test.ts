@@ -22,6 +22,9 @@ const mockAdminClient = {
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => mockSupabase),
+}));
+
+vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: vi.fn(() => mockAdminClient),
 }));
 
@@ -31,20 +34,6 @@ function createSingleBuilder(data: unknown, error: unknown = null) {
     builder[m] = vi.fn(() => builder);
   });
   builder.single = vi.fn(() => Promise.resolve({ data, error }));
-  return builder;
-}
-
-function createListBuilder(data: unknown[]) {
-  const builder: Record<string, unknown> = {};
-  ['select', 'eq', 'in', 'order', 'insert', 'update'].forEach((m) => {
-    builder[m] = vi.fn(() => builder);
-  });
-  // Returns array, no .single()
-  const result = Promise.resolve({ data, error: null });
-  Object.assign(builder, {
-    then: result.then.bind(result),
-    catch: result.catch.bind(result),
-  });
   return builder;
 }
 

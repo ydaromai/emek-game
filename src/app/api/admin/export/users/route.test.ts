@@ -8,10 +8,10 @@ vi.mock('next/headers', () => ({
 }));
 
 // Mock supabase
-const mockGetSession = vi.fn();
+const mockGetUser = vi.fn();
 const mockFrom = vi.fn();
 const mockSupabase = {
-  auth: { getSession: mockGetSession },
+  auth: { getUser: mockGetUser },
   from: mockFrom,
 };
 vi.mock('@/lib/supabase/server', () => ({
@@ -31,10 +31,6 @@ function createChainableBuilder(finalData: unknown) {
   for (const m of methods) {
     builder[m] = vi.fn(() => builder);
   }
-  // Terminal - return promise when chain ends (no .single, just resolves)
-  builder[Symbol.for('then')] = undefined;
-  // The route doesn't call .single() on the users query - it just awaits
-  // Mock the implicit promise resolution
   const result = Promise.resolve({ data: finalData, error: null });
   Object.assign(builder, {
     then: result.then.bind(result),
@@ -58,7 +54,7 @@ describe('GET /api/admin/export/users', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: null } });
+    mockGetUser.mockResolvedValue({ data: { user: null } });
 
     const { GET } = await import('./route');
     const req = new NextRequest('http://localhost/api/admin/export/users');
@@ -68,8 +64,8 @@ describe('GET /api/admin/export/users', () => {
   });
 
   it('returns 400 when no tenant slug', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue(null);
 
@@ -81,8 +77,8 @@ describe('GET /api/admin/export/users', () => {
   });
 
   it('returns 403 when user is not admin', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park' });
@@ -99,8 +95,8 @@ describe('GET /api/admin/export/users', () => {
   });
 
   it('returns CSV with UTF-8 BOM for admin', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park' });
@@ -148,8 +144,8 @@ describe('GET /api/admin/export/users', () => {
   });
 
   it('applies search filter when provided', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park' });

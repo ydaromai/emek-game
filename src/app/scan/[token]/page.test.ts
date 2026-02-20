@@ -9,18 +9,22 @@ vi.mock('next/navigation', () => ({
   },
 }));
 
-// Mock supabase
-const mockGetSession = vi.fn();
+// Mock supabase — scan page creates its own client for DB queries
 const mockFrom = vi.fn();
 const mockSupabase = {
-  auth: { getSession: mockGetSession },
   from: mockFrom,
 };
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => mockSupabase),
 }));
 
-// Mock tenant
+// Mock getAuthUser from auth.ts — scan page uses this for auth
+const mockGetAuthUser = vi.fn();
+vi.mock('@/lib/auth', () => ({
+  getAuthUser: () => mockGetAuthUser(),
+}));
+
+// Mock resolveTenant from tenant.ts
 const mockResolveTenant = vi.fn();
 vi.mock('@/lib/tenant', () => ({
   resolveTenant: () => mockResolveTenant(),
@@ -40,12 +44,6 @@ function createQueryBuilder(data: unknown) {
   return builder;
 }
 
-function createUpsertBuilder() {
-  return {
-    upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
-  };
-}
-
 describe('ScanPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -62,7 +60,7 @@ describe('ScanPage', () => {
 
   it('redirects to login when not authenticated', async () => {
     mockResolveTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
-    mockGetSession.mockResolvedValue({ data: { session: null } });
+    mockGetAuthUser.mockResolvedValue(null);
 
     const ScanPage = (await import('./page')).default;
     const validUUID = '550e8400-e29b-41d4-a716-446655440000';
@@ -78,9 +76,7 @@ describe('ScanPage', () => {
 
   it('renders error when animal not found for tenant', async () => {
     mockResolveTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
-    });
+    mockGetAuthUser.mockResolvedValue({ id: 'u1' });
 
     // Animal query returns null
     const animalBuilder = createQueryBuilder(null);
@@ -96,9 +92,7 @@ describe('ScanPage', () => {
 
   it('renders error when animal is inactive', async () => {
     mockResolveTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
-    });
+    mockGetAuthUser.mockResolvedValue({ id: 'u1' });
 
     const animalBuilder = createQueryBuilder({
       id: 'a1',
@@ -118,9 +112,7 @@ describe('ScanPage', () => {
 
   it('records progress and redirects for valid scan', async () => {
     mockResolveTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
-    });
+    mockGetAuthUser.mockResolvedValue({ id: 'u1' });
 
     const animal = {
       id: 'a1',
@@ -162,9 +154,7 @@ describe('ScanPage', () => {
 
   it('redirects without ?new=true for repeat scan', async () => {
     mockResolveTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
-    });
+    mockGetAuthUser.mockResolvedValue({ id: 'u1' });
 
     const animal = {
       id: 'a1',

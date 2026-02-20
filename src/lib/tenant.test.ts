@@ -85,7 +85,6 @@ describe('tenant', () => {
       expect(tenant).toEqual(fakeTenant);
       expect(mockFrom).toHaveBeenCalledWith('tenants');
       expect(qb.eq).toHaveBeenCalledWith('slug', 'park-a');
-      expect(qb.eq).toHaveBeenCalledWith('is_active', true);
     });
 
     it('returns null for non-existent slug', async () => {
@@ -100,8 +99,8 @@ describe('tenant', () => {
   });
 
   describe('getTenantOrNotFound', () => {
-    it('returns tenant when found', async () => {
-      const fakeTenant = { id: 'tenant-1', slug: 'park-a', is_active: true };
+    it('returns tenant when found and active', async () => {
+      const fakeTenant = { id: 'tenant-1', slug: 'park-a', name: 'Park A', is_active: true };
       const qb = createQueryBuilder(fakeTenant);
       mockFrom.mockReturnValue(qb);
 
@@ -120,12 +119,23 @@ describe('tenant', () => {
       await expect(getTenantOrNotFound('bad-slug')).rejects.toThrow('NEXT_REDIRECT');
       expect(mockRedirect).toHaveBeenCalledWith('/tenant-not-found');
     });
+
+    it('redirects to /tenant-suspended when tenant is inactive', async () => {
+      const fakeTenant = { id: 'tenant-1', slug: 'park-a', name: 'Park A', is_active: false };
+      const qb = createQueryBuilder(fakeTenant);
+      mockFrom.mockReturnValue(qb);
+
+      const { getTenantOrNotFound } = await import('@/lib/tenant');
+
+      await expect(getTenantOrNotFound('park-a')).rejects.toThrow('NEXT_REDIRECT');
+      expect(mockRedirect).toHaveBeenCalledWith('/tenant-suspended?name=Park%20A');
+    });
   });
 
   describe('resolveTenant', () => {
     it('returns tenant for active tenant slug in headers', async () => {
       mockGet.mockReturnValue('park-a');
-      const fakeTenant = { id: 'tenant-1', slug: 'park-a', is_active: true };
+      const fakeTenant = { id: 'tenant-1', slug: 'park-a', name: 'Park A', is_active: true };
       const qb = createQueryBuilder(fakeTenant);
       mockFrom.mockReturnValue(qb);
 
@@ -144,15 +154,27 @@ describe('tenant', () => {
       expect(tenant).toBeNull();
     });
 
-    it('returns null when tenant not found for slug', async () => {
+    it('redirects to /tenant-not-found when tenant not found for slug', async () => {
       mockGet.mockReturnValue('non-existent');
       const qb = createQueryBuilder(null);
       mockFrom.mockReturnValue(qb);
 
       const { resolveTenant } = await import('@/lib/tenant');
-      const tenant = await resolveTenant();
 
-      expect(tenant).toBeNull();
+      await expect(resolveTenant()).rejects.toThrow('NEXT_REDIRECT');
+      expect(mockRedirect).toHaveBeenCalledWith('/tenant-not-found');
+    });
+
+    it('redirects to /tenant-suspended when tenant is inactive', async () => {
+      mockGet.mockReturnValue('park-a');
+      const fakeTenant = { id: 'tenant-1', slug: 'park-a', name: 'Park A', is_active: false };
+      const qb = createQueryBuilder(fakeTenant);
+      mockFrom.mockReturnValue(qb);
+
+      const { resolveTenant } = await import('@/lib/tenant');
+
+      await expect(resolveTenant()).rejects.toThrow('NEXT_REDIRECT');
+      expect(mockRedirect).toHaveBeenCalledWith('/tenant-suspended?name=Park%20A');
     });
   });
 });

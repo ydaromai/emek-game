@@ -7,10 +7,10 @@ vi.mock('next/headers', () => ({
 }));
 
 // Mock supabase
-const mockGetSession = vi.fn();
+const mockGetUser = vi.fn();
 const mockFrom = vi.fn();
 const mockSupabase = {
-  auth: { getSession: mockGetSession },
+  auth: { getUser: mockGetUser },
   from: mockFrom,
 };
 vi.mock('@/lib/supabase/server', () => ({
@@ -24,15 +24,6 @@ vi.mock('@/lib/tenant', () => ({
 }));
 
 // Query builder helpers
-function createCountBuilder(count: number) {
-  const builder: Record<string, unknown> = {};
-  ['select', 'eq'].forEach((m) => {
-    builder[m] = vi.fn(() => builder);
-  });
-  builder.single = vi.fn(() => Promise.resolve({ count, data: null, error: null }));
-  return builder;
-}
-
 function createMembershipBuilder(data: unknown) {
   const builder: Record<string, unknown> = {};
   ['select', 'eq'].forEach((m) => {
@@ -48,7 +39,7 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: null } });
+    mockGetUser.mockResolvedValue({ data: { user: null } });
 
     const { GET } = await import('./route');
     const res = await GET();
@@ -57,8 +48,8 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('returns 400 when no tenant slug', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue(null);
 
@@ -69,8 +60,8 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('returns 404 when tenant not found', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('bad-slug');
     mockGetTenant.mockResolvedValue(null);
@@ -82,8 +73,8 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('returns 403 when user is not admin/staff', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park' });
@@ -98,8 +89,8 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('returns analytics data for admin', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park' });
@@ -113,9 +104,6 @@ describe('GET /api/admin/analytics', () => {
       }
       if (callNum === 2) {
         // total users count
-        const b: Record<string, unknown> = {};
-        ['select', 'eq'].forEach((m) => { b[m] = vi.fn(() => b); });
-        // Simulate count response
         return { select: vi.fn(() => ({ eq: vi.fn(() => ({ eq: vi.fn(() => Promise.resolve({ count: 50, data: null, error: null })) })) })) };
       }
       if (callNum === 3) {

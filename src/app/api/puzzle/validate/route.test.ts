@@ -8,10 +8,10 @@ vi.mock('next/headers', () => ({
 }));
 
 // Mock supabase server
-const mockGetSession = vi.fn();
+const mockGetUser = vi.fn();
 const mockFrom = vi.fn();
 const mockSupabase = {
-  auth: { getSession: mockGetSession },
+  auth: { getUser: mockGetUser },
   from: mockFrom,
 };
 vi.mock('@/lib/supabase/server', () => ({
@@ -57,7 +57,7 @@ describe('POST /api/puzzle/validate', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: null } });
+    mockGetUser.mockResolvedValue({ data: { user: null } });
 
     const { POST } = await import('./route');
     const res = await POST(makeRequest({ answer: 'test' }));
@@ -68,8 +68,8 @@ describe('POST /api/puzzle/validate', () => {
   });
 
   it('returns 400 when no tenant slug header', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue(null);
 
@@ -80,8 +80,8 @@ describe('POST /api/puzzle/validate', () => {
   });
 
   it('returns 404 when tenant not found', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('some-slug');
     mockGetTenant.mockResolvedValue(null);
@@ -93,8 +93,8 @@ describe('POST /api/puzzle/validate', () => {
   });
 
   it('returns 400 when answer is missing', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
@@ -106,8 +106,8 @@ describe('POST /api/puzzle/validate', () => {
   });
 
   it('returns existing redemption code if already completed', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
@@ -125,35 +125,13 @@ describe('POST /api/puzzle/validate', () => {
   });
 
   it('returns { correct: false } for wrong answer', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });
 
-    // No existing redemption
     const noRedemption = createQueryBuilder(null);
-    // Animals query
-    const animalsBuilder: Record<string, unknown> = {};
-    ['select', 'eq', 'order'].forEach((m) => {
-      animalsBuilder[m] = vi.fn(() => animalsBuilder);
-    });
-    animalsBuilder.single = vi.fn(() => Promise.resolve({
-      data: [
-        { letter: 'א', order_index: 1 },
-        { letter: 'ב', order_index: 2 },
-      ],
-      error: null,
-    }));
-
-    let callCount = 0;
-    mockFrom.mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) return noRedemption; // redemptions check
-      return animalsBuilder; // animals query
-    });
-
-    // Override the animals query to return array directly
     const animalsResult = {
       data: [
         { letter: 'א', order_index: 1 },
@@ -167,7 +145,7 @@ describe('POST /api/puzzle/validate', () => {
     });
     animalsQ.order = vi.fn(() => Promise.resolve(animalsResult));
 
-    callCount = 0;
+    let callCount = 0;
     mockFrom.mockImplementation(() => {
       callCount++;
       if (callCount === 1) return noRedemption;
@@ -182,8 +160,8 @@ describe('POST /api/puzzle/validate', () => {
   });
 
   it('returns correct=true with redemption code for correct answer', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park', is_active: true });

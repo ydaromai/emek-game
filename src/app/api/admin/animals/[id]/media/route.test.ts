@@ -8,10 +8,10 @@ vi.mock('next/headers', () => ({
 }));
 
 // Mock supabase
-const mockGetSession = vi.fn();
+const mockGetUser = vi.fn();
 const mockFrom = vi.fn();
 const mockSupabase = {
-  auth: { getSession: mockGetSession },
+  auth: { getUser: mockGetUser },
   from: mockFrom,
 };
 vi.mock('@/lib/supabase/server', () => ({
@@ -67,7 +67,7 @@ describe('POST /api/admin/animals/[id]/media', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: null } });
+    mockGetUser.mockResolvedValue({ data: { user: null } });
 
     const { POST } = await import('./route');
     const req = new NextRequest('http://localhost/api/admin/animals/animal-1/media', {
@@ -79,8 +79,8 @@ describe('POST /api/admin/animals/[id]/media', () => {
   });
 
   it('returns 400 when no tenant context', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue(null);
     mockGetTenant.mockResolvedValue(null);
@@ -95,8 +95,8 @@ describe('POST /api/admin/animals/[id]/media', () => {
   });
 
   it('returns 403 when user is not admin', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park' });
@@ -114,8 +114,8 @@ describe('POST /api/admin/animals/[id]/media', () => {
   });
 
   it('returns 404 when animal not in tenant', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park' });
@@ -148,7 +148,7 @@ describe('DELETE /api/admin/animals/[id]/media', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: null } });
+    mockGetUser.mockResolvedValue({ data: { user: null } });
 
     const { DELETE } = await import('./route');
     const req = new NextRequest('http://localhost/api/admin/animals/animal-1/media', {
@@ -162,8 +162,8 @@ describe('DELETE /api/admin/animals/[id]/media', () => {
   });
 
   it('returns 400 for invalid type', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park' });
@@ -183,8 +183,8 @@ describe('DELETE /api/admin/animals/[id]/media', () => {
   });
 
   it('returns success when deleting media', async () => {
-    mockGetSession.mockResolvedValue({
-      data: { session: { user: { id: 'u1' } } },
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'u1' } },
     });
     mockHeadersGet.mockReturnValue('park-slug');
     mockGetTenant.mockResolvedValue({ id: 't1', name: 'Park' });

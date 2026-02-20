@@ -172,7 +172,7 @@ describe('PATCH /api/admin/branding', () => {
       return profileBuilder;
     });
 
-    const updatedBranding = { primary: '#ff0000', accent: '#00ff00' };
+    const updatedBranding = { primary: '#ff0000', accent: '#00ff00', background: '#ffffff', text: '#000000', error: '#cc0000', success: '#00cc00' };
     mockAdminFrom.mockReturnValue(
       createSingleBuilder({ branding: updatedBranding })
     );
