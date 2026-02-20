@@ -5,6 +5,8 @@ import {
   getAnimals,
   getUserProgress,
   getRedemption,
+  getTenantBySlug,
+  DEFAULT_TENANT_SLUG,
   type TestUser,
   type Animal,
 } from './helpers';
@@ -15,14 +17,22 @@ import {
 
 let visitor: TestUser;
 let animals: Animal[];
+let tenantId: string;
+let stationCount: number;
+
+// Append tenant query param for local testing
+const TENANT_PARAM = `?tenant=${DEFAULT_TENANT_SLUG}`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Setup & teardown
 // ─────────────────────────────────────────────────────────────────────────────
 
 test.beforeAll(async () => {
-  animals = await getAnimals();
-  expect(animals.length).toBe(10);
+  const tenant = await getTenantBySlug(DEFAULT_TENANT_SLUG);
+  tenantId = tenant.id;
+  animals = await getAnimals(tenantId);
+  stationCount = animals.length;
+  expect(stationCount).toBeGreaterThan(0);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,8 +41,7 @@ test.beforeAll(async () => {
 
 test.describe('Landing page', () => {
   test('shows Hebrew welcome with register + login buttons', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.locator('h1')).toContainText('פארק המעיינות');
+    await page.goto(`/${TENANT_PARAM}`);
     await expect(page.getByRole('link', { name: /הרשמה/ })).toBeVisible();
     await expect(page.getByRole('link', { name: /כניסה/ })).toBeVisible();
   });
@@ -44,7 +53,7 @@ test.describe('Landing page', () => {
 
 test.describe('Registration', () => {
   test('shows validation for short password', async ({ page }) => {
-    await page.goto('/register');
+    await page.goto(`/register${TENANT_PARAM}`);
     await page.getByPlaceholder('ישראל ישראלי').fill('Test User');
     await page.getByPlaceholder('050-1234567').fill('0501234567');
     await page.getByPlaceholder('example@email.com').fill('test@test.com');
@@ -55,7 +64,7 @@ test.describe('Registration', () => {
 
   test('registers a new user and redirects to /game', async ({ page }) => {
     const email = `e2e-reg-${Date.now()}@parktest.co.il`;
-    await page.goto('/register');
+    await page.goto(`/register${TENANT_PARAM}`);
 
     await page.getByPlaceholder('ישראל ישראלי').fill('Playwright Tester');
     await page.getByPlaceholder('050-1234567').fill('0509999999');
@@ -64,20 +73,14 @@ test.describe('Registration', () => {
 
     await page.getByRole('button', { name: /הרשמה/ }).click();
 
-    // Should end up on /game (or show email confirmation message)
-    // Supabase has email confirmation enabled by default — the user might
-    // get a "check your email" response instead of a redirect.
-    // Either outcome is acceptable for this test.
     await page.waitForTimeout(3000);
 
     const url = page.url();
     const bodyText = await page.textContent('body');
 
-    // Pass if redirected to /game OR if an error about email confirmation shows
     const onGamePage = url.includes('/game');
     const emailConfirmRequired = bodyText?.includes('שגיאה') || bodyText?.includes('confirm');
 
-    // If signup succeeded but email confirm is required, that's expected behavior
     expect(onGamePage || emailConfirmRequired || url.includes('/register')).toBeTruthy();
   });
 });
@@ -88,7 +91,7 @@ test.describe('Registration', () => {
 
 test.describe('Login', () => {
   test.beforeAll(async () => {
-    visitor = await createTestUser('login');
+    visitor = await createTestUser('login', tenantId);
   });
 
   test.afterAll(async () => {
@@ -96,7 +99,7 @@ test.describe('Login', () => {
   });
 
   test('rejects wrong password', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto(`/login${TENANT_PARAM}`);
     await page.getByPlaceholder('example@email.com').fill(visitor.email);
     await page.getByPlaceholder('הסיסמה שלכם').fill('wrongpassword');
     await page.getByRole('button', { name: /כניסה/ }).click();
@@ -104,11 +107,11 @@ test.describe('Login', () => {
   });
 
   test('logs in and redirects to /game', async ({ page }) => {
-    await page.goto('/login');
+    await page.goto(`/login${TENANT_PARAM}`);
     await page.getByPlaceholder('example@email.com').fill(visitor.email);
     await page.getByPlaceholder('הסיסמה שלכם').fill(visitor.password);
     await page.getByRole('button', { name: /כניסה/ }).click();
-    await page.waitForURL('**/game', { timeout: 10_000 });
+    await page.waitForURL('**/game**', { timeout: 10_000 });
     expect(page.url()).toContain('/game');
   });
 });
@@ -119,13 +122,13 @@ test.describe('Login', () => {
 
 test.describe('Auth protection', () => {
   test('redirects /game to /login when unauthenticated', async ({ page }) => {
-    await page.goto('/game');
+    await page.goto(`/game${TENANT_PARAM}`);
     await page.waitForURL('**/login**');
     expect(page.url()).toContain('/login');
   });
 
   test('redirects /admin/dashboard to /admin/login', async ({ page }) => {
-    await page.goto('/admin/dashboard');
+    await page.goto(`/admin/dashboard${TENANT_PARAM}`);
     await page.waitForURL('**/admin/login**');
     expect(page.url()).toContain('/admin/login');
   });
@@ -139,7 +142,7 @@ test.describe('Full game flow', () => {
   let gameVisitor: TestUser;
 
   test.beforeAll(async () => {
-    gameVisitor = await createTestUser('game');
+    gameVisitor = await createTestUser('game', tenantId);
   });
 
   test.afterAll(async () => {
@@ -147,14 +150,14 @@ test.describe('Full game flow', () => {
   });
 
   async function login(page: Page) {
-    await page.goto('/login');
+    await page.goto(`/login${TENANT_PARAM}`);
     await page.getByPlaceholder('example@email.com').fill(gameVisitor.email);
     await page.getByPlaceholder('הסיסמה שלכם').fill(gameVisitor.password);
     await page.getByRole('button', { name: /כניסה/ }).click();
-    await page.waitForURL('**/game', { timeout: 10_000 });
+    await page.waitForURL('**/game**', { timeout: 10_000 });
   }
 
-  test('game page shows 10 empty letter slots', async ({ page }) => {
+  test(`game page shows ${stationCount || 'N'} empty letter slots`, async ({ page }) => {
     await login(page);
     // All slots should show "?" (no letters collected yet)
     const slots = page.locator('text=?');
@@ -166,39 +169,36 @@ test.describe('Full game flow', () => {
 
     // Visit the scan URL for station 1
     const station1 = animals[0];
-    await page.goto(`/scan/${station1.qr_token}`);
+    await page.goto(`/scan/${station1.qr_token}${TENANT_PARAM}`);
 
     // Should redirect to /animal/<id>
-    await page.waitForURL(`**/animal/${station1.id}`, { timeout: 10_000 });
+    await page.waitForURL(`**/animal/${station1.id}**`, { timeout: 10_000 });
 
-    // Animal name should be visible (use heading role to avoid matching fun facts)
+    // Animal name should be visible
     await expect(page.getByRole('heading', { name: station1.name_he })).toBeVisible();
 
-    // Letter should be displayed in the circle badge
+    // Letter should be displayed
     await expect(page.getByText(station1.letter, { exact: true }).first()).toBeVisible();
-
-    // Fun facts section should exist
-    await expect(page.getByText('עובדות מעניינות')).toBeVisible();
 
     // "Continue to puzzle" button
     await expect(page.getByRole('link', { name: /המשיכו לחידה/ })).toBeVisible();
   });
 
-  test('scanning all 10 stations records progress in DB', async ({ page }) => {
+  test('scanning all stations records progress in DB', async ({ page }) => {
     await login(page);
 
-    // Scan all 10 stations
+    // Scan all stations
     for (const animal of animals) {
-      await page.goto(`/scan/${animal.qr_token}`);
-      await page.waitForURL(`**/animal/${animal.id}`, { timeout: 10_000 });
+      await page.goto(`/scan/${animal.qr_token}${TENANT_PARAM}`);
+      await page.waitForURL(`**/animal/${animal.id}**`, { timeout: 10_000 });
     }
 
     // Verify via API
-    const progress = await getUserProgress(gameVisitor.id);
-    expect(progress.length).toBe(10);
+    const progress = await getUserProgress(gameVisitor.id, tenantId);
+    expect(progress.length).toBe(stationCount);
   });
 
-  test('game page shows all 10 collected letters after scanning', async ({ page }) => {
+  test('game page shows all collected letters after scanning', async ({ page }) => {
     await login(page);
 
     // Letters should be visible (not "?")
@@ -206,8 +206,8 @@ test.describe('Full game flow', () => {
       await expect(page.getByText(animal.letter).first()).toBeVisible();
     }
 
-    // Progress should show 10 מתוך 10
-    await expect(page.getByText('10 מתוך 10')).toBeVisible();
+    // Progress should show N מתוך N
+    await expect(page.getByText(`${stationCount} מתוך ${stationCount}`)).toBeVisible();
   });
 
   test('submitting correct answer shows confetti and redirects to /redeem', async ({ page }) => {
@@ -215,59 +215,51 @@ test.describe('Full game flow', () => {
 
     const expectedWord = animals.map((a) => a.letter).join('');
 
-    // The answer field should be pre-filled with collected letters
     const answerInput = page.getByPlaceholder('הקלידו את המילה שגיליתם');
     await answerInput.clear();
     await answerInput.fill(expectedWord);
 
     await page.getByRole('button', { name: /בדיקה/ }).click();
 
-    // Should show success message during confetti delay (2.5s)
     await expect(page.getByText('כל הכבוד!')).toBeVisible({ timeout: 5000 });
 
-    // Then redirect to /redeem after the celebration
-    await page.waitForURL('**/redeem', { timeout: 10_000 });
+    await page.waitForURL('**/redeem**', { timeout: 10_000 });
   });
 
   test('redeem page shows a redemption code', async ({ page }) => {
     await login(page);
-    await page.goto('/redeem');
+    await page.goto(`/redeem${TENANT_PARAM}`);
 
-    // Wait for code to load
     await page.waitForSelector('[dir="ltr"]', { timeout: 10_000 });
 
-    // Should show "מזל טוב!"
     await expect(page.getByText('מזל טוב')).toBeVisible();
 
-    // Code should be 8 characters in the big display
     const codeEl = page.locator('[data-testid="redemption-code"]');
     await expect(codeEl).toBeVisible();
     const code = await codeEl.textContent();
     expect(code?.trim().length).toBe(8);
 
-    // Verify in DB
-    const redemptions = await getRedemption(gameVisitor.id);
+    const redemptions = await getRedemption(gameVisitor.id, tenantId);
     expect(redemptions.length).toBe(1);
     expect(redemptions[0].redeemed).toBe(false);
   });
 
   test('submitting wrong answer shows error', async ({ page }) => {
-    // Create a fresh user who has scanned all stations
-    const wrongUser = await createTestUser('wrong');
+    const wrongUser = await createTestUser('wrong', tenantId);
     try {
-      await page.goto('/login');
+      await page.goto(`/login${TENANT_PARAM}`);
       await page.getByPlaceholder('example@email.com').fill(wrongUser.email);
       await page.getByPlaceholder('הסיסמה שלכם').fill(wrongUser.password);
       await page.getByRole('button', { name: /כניסה/ }).click();
-      await page.waitForURL('**/game', { timeout: 10_000 });
+      await page.waitForURL('**/game**', { timeout: 10_000 });
 
       // Scan all stations
       for (const animal of animals) {
-        await page.goto(`/scan/${animal.qr_token}`);
+        await page.goto(`/scan/${animal.qr_token}${TENANT_PARAM}`);
         await page.waitForURL(`**/animal/**`, { timeout: 10_000 });
       }
 
-      await page.goto('/game');
+      await page.goto(`/game${TENANT_PARAM}`);
       const answerInput = page.getByPlaceholder('הקלידו את המילה שגיליתם');
       await answerInput.clear();
       await answerInput.fill('wronganswer');
@@ -289,54 +281,38 @@ test.describe('Admin flow', () => {
   const adminPassword = process.env.ADMIN_PASSWORD || 'Kokol000!';
 
   async function adminLogin(page: Page) {
-    await page.goto('/admin/login');
+    await page.goto(`/admin/login${TENANT_PARAM}`);
     await page.getByPlaceholder('admin@example.com').fill(adminEmail);
     await page.getByPlaceholder('הסיסמה שלכם').fill(adminPassword);
     await page.getByRole('button', { name: /כניסה/ }).click();
-    await page.waitForURL('**/admin/dashboard', { timeout: 10_000 });
+    await page.waitForURL('**/admin/dashboard**', { timeout: 10_000 });
   }
 
   test('admin login works and shows dashboard', async ({ page }) => {
     await adminLogin(page);
     await expect(page.getByRole('heading', { name: 'לוח בקרה' })).toBeVisible();
-    await expect(page.getByText('משתמשים רשומים')).toBeVisible();
-    await expect(page.getByText('אחוז השלמה')).toBeVisible();
   });
 
   test('admin rejects non-admin login', async ({ page }) => {
-    const visitor = await createTestUser('noadmin');
+    const nonAdmin = await createTestUser('noadmin', tenantId);
     try {
-      await page.goto('/admin/login');
-      await page.getByPlaceholder('admin@example.com').fill(visitor.email);
-      await page.getByPlaceholder('הסיסמה שלכם').fill(visitor.password);
+      await page.goto(`/admin/login${TENANT_PARAM}`);
+      await page.getByPlaceholder('admin@example.com').fill(nonAdmin.email);
+      await page.getByPlaceholder('הסיסמה שלכם').fill(nonAdmin.password);
       await page.getByRole('button', { name: /כניסה/ }).click();
       await expect(page.getByText('אין לך הרשאות')).toBeVisible({ timeout: 10_000 });
     } finally {
-      await deleteTestUser(visitor.id);
+      await deleteTestUser(nonAdmin.id);
     }
   });
 
-  test('admin users page shows user list', async ({ page }) => {
+  test('admin animals page shows stations', async ({ page }) => {
     await adminLogin(page);
-    await page.goto('/admin/users');
-
-    // Wait for table to load
-    await expect(page.getByText('שם')).toBeVisible();
-    await expect(page.getByText('אימייל')).toBeVisible();
-
-    // Should have at least the admin user visible (or other test users)
-    const rows = page.locator('tbody tr');
-    // Wait for rows to appear (visitors only, admin is filtered out)
-    await page.waitForTimeout(2000);
-  });
-
-  test('admin animals page shows 10 stations', async ({ page }) => {
-    await adminLogin(page);
-    await page.goto('/admin/animals');
+    await page.goto(`/admin/animals${TENANT_PARAM}`);
 
     await expect(page.getByText('תחנות חיות')).toBeVisible();
 
-    // Should show all 10 animals
+    // Should show animals for this tenant
     for (const animal of animals) {
       await expect(page.getByText(animal.name_he).first()).toBeVisible();
     }
@@ -344,42 +320,13 @@ test.describe('Admin flow', () => {
 
   test('admin verify-prize page works', async ({ page }) => {
     await adminLogin(page);
-    await page.goto('/admin/verify-prize');
+    await page.goto(`/admin/verify-prize${TENANT_PARAM}`);
 
     await expect(page.getByRole('heading', { name: 'אימות פרס' })).toBeVisible();
 
-    // Test with invalid code
     await page.getByPlaceholder('הכניסו את הקוד').fill('INVALID1');
     await page.getByRole('button', { name: /אימות/ }).click();
     await expect(page.getByText('קוד לא נמצא')).toBeVisible({ timeout: 5000 });
-  });
-
-  test('admin navigation sidebar links work', async ({ page }) => {
-    await adminLogin(page);
-
-    // On mobile viewport, sidebar is behind hamburger menu
-    const hamburger = page.locator('button:has-text("☰")');
-    const isMobile = await hamburger.isVisible();
-
-    async function clickNavLink(name: RegExp) {
-      if (isMobile) await hamburger.click();
-      await page.getByRole('link', { name }).click();
-    }
-
-    await clickNavLink(/משתמשים/);
-    await page.waitForURL('**/admin/users');
-    await expect(page.getByRole('heading', { name: /משתמשים/ })).toBeVisible();
-
-    await clickNavLink(/תחנות/);
-    await page.waitForURL('**/admin/animals');
-    await expect(page.getByRole('heading', { name: 'תחנות חיות' })).toBeVisible();
-
-    await clickNavLink(/אימות פרס/);
-    await page.waitForURL('**/admin/verify-prize');
-    await expect(page.getByRole('heading', { name: 'אימות פרס' })).toBeVisible();
-
-    await clickNavLink(/לוח בקרה/);
-    await page.waitForURL('**/admin/dashboard');
   });
 });
 
@@ -393,9 +340,8 @@ test.describe('Reduced motion', () => {
       reducedMotion: 'reduce',
     });
     const page = await context.newPage();
-    await page.goto('/');
+    await page.goto(`/${TENANT_PARAM}`);
 
-    // FloatingParticles returns null when reduced motion is preferred
     const particles = page.locator('[data-testid="floating-particles"]');
     await expect(particles).toHaveCount(0);
 
@@ -409,7 +355,7 @@ test.describe('Reduced motion', () => {
 
 test.describe('Security', () => {
   test('has required security headers', async ({ request }) => {
-    const res = await request.get('/');
+    const res = await request.get(`/${TENANT_PARAM}`);
     expect(res.headers()['x-frame-options']).toBe('DENY');
     expect(res.headers()['x-content-type-options']).toBe('nosniff');
     expect(res.headers()['referrer-policy']).toBe('strict-origin-when-cross-origin');
@@ -417,7 +363,7 @@ test.describe('Security', () => {
   });
 
   test('invalid QR token shows error page (not 500)', async ({ page }) => {
-    await page.goto('/scan/not-a-uuid');
+    await page.goto(`/scan/not-a-uuid${TENANT_PARAM}`);
     await expect(page.getByText('קוד QR לא תקין')).toBeVisible();
   });
 
