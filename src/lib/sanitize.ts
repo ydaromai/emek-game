@@ -51,9 +51,9 @@ export function escapeCSVField(field: string | null | undefined): string {
     value = "'" + value;
   }
 
-  // RFC 4180: if the field contains a comma, double-quote, or newline, wrap in quotes.
+  // RFC 4180: if the field contains a comma, double-quote, newline, or tab, wrap in quotes.
   // Internal double-quotes are escaped by doubling them.
-  if (/[",\n\r]/.test(value)) {
+  if (/[",\n\r\t]/.test(value)) {
     value = '"' + value.replace(/"/g, '""') + '"';
   }
 
@@ -76,6 +76,7 @@ const OPTIONAL_URL_FIELDS = ['logo_url', 'bg_image_url'] as const;
 const OPTIONAL_STRING_FIELDS = ['font_family'] as const;
 
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{3,8}$/;
+const SAFE_FONT_FAMILY_RE = /^[a-zA-Z0-9\s\-,.']+$/;
 
 const ALLOWED_FIELDS = new Set<string>([
   ...REQUIRED_COLOR_FIELDS,
@@ -149,6 +150,8 @@ export function validateBranding(branding: unknown): {
         errors.push(`Field "${field}" must be a string`);
       } else if (value.length > 200) {
         errors.push(`Field "${field}" exceeds maximum length of 200 characters`);
+      } else if (field === 'font_family' && !SAFE_FONT_FAMILY_RE.test(value)) {
+        errors.push(`Field "${field}" contains invalid characters`);
       }
     }
   }

@@ -35,7 +35,8 @@ export async function GET() {
       .order('created_at', { ascending: false });
 
     if (membershipsError) {
-      return NextResponse.json({ error: membershipsError.message }, { status: 500 });
+      console.error('Failed to fetch memberships:', membershipsError.message);
+      return NextResponse.json({ error: 'Failed to fetch memberships' }, { status: 500 });
     }
 
     // Fetch all tenants for the dropdown and name resolution
@@ -45,7 +46,8 @@ export async function GET() {
       .order('name');
 
     if (tenantsError) {
-      return NextResponse.json({ error: tenantsError.message }, { status: 500 });
+      console.error('Failed to fetch tenants:', tenantsError.message);
+      return NextResponse.json({ error: 'Failed to fetch tenants' }, { status: 500 });
     }
 
     // Fetch profiles for email resolution
@@ -58,7 +60,8 @@ export async function GET() {
         .in('user_id', userIds);
 
       if (profilesError) {
-        return NextResponse.json({ error: profilesError.message }, { status: 500 });
+        console.error('Failed to fetch profiles:', profilesError.message);
+        return NextResponse.json({ error: 'Failed to fetch profiles' }, { status: 500 });
       }
       profiles = profilesData || [];
     }
@@ -139,7 +142,8 @@ export async function POST(request: Request) {
       }
       userId = existingProfile.user_id;
     } else if (createError || !newUser?.user) {
-      return NextResponse.json({ error: createError?.message || 'Failed to create user' }, { status: 500 });
+      console.error('Failed to create user:', createError?.message);
+      return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
     } else {
       userId = newUser.user.id;
     }
@@ -185,10 +189,12 @@ export async function POST(request: Request) {
             });
 
           if (retryError) {
-            return NextResponse.json({ error: retryError.message }, { status: 500 });
+            console.error('Failed to create profile (retry):', retryError.message);
+            return NextResponse.json({ error: 'Failed to create member profile' }, { status: 500 });
           }
         } else {
-          return NextResponse.json({ error: profileError.message }, { status: 500 });
+          console.error('Failed to create profile:', profileError.message);
+          return NextResponse.json({ error: 'Failed to create member profile' }, { status: 500 });
         }
       }
     }
@@ -210,7 +216,8 @@ export async function POST(request: Request) {
         .eq('tenant_id', tenant_id);
 
       if (updateError) {
-        return NextResponse.json({ error: updateError.message }, { status: 500 });
+        console.error('Failed to update membership:', updateError.message);
+        return NextResponse.json({ error: 'Failed to update membership' }, { status: 500 });
       }
 
       return NextResponse.json({
@@ -227,7 +234,8 @@ export async function POST(request: Request) {
       .single();
 
     if (membershipError) {
-      return NextResponse.json({ error: membershipError.message }, { status: 500 });
+      console.error('Failed to create membership:', membershipError.message);
+      return NextResponse.json({ error: 'Failed to create membership' }, { status: 500 });
     }
 
     return NextResponse.json({

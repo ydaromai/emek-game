@@ -66,8 +66,8 @@ test.describe('Admin CRUD', () => {
     if (hasSearch > 0) {
       // Enter a PostgREST injection attempt
       await searchInput.first().fill('test),full_name.eq.admin');
-      // Wait a moment for any client-side filtering or API call
-      await page.waitForTimeout(500);
+      // Wait for any client-side filtering or API call to complete
+      await page.waitForLoadState('networkidle');
 
       // The page should NOT show an error or crash
       // Verify no server error messages appear

@@ -13,16 +13,16 @@
 # E2E_ADMIN_EMAIL                - Email for the admin user used in Playwright E2E
 #                                  tests.
 #
+# E2E_ADMIN_PASSWORD             - Password for the E2E admin user.
+#
+# E2E_VISITOR_PASSWORD           - Password for the E2E visitor user.
+#
 # --- Required GitHub Repository Variables ------------------------------------
 #
 # ENABLE_E2E                     - Set to "true" to enable the E2E job.
 #                                  (Settings > Secrets and variables > Actions >
 #                                  Variables tab > New repository variable)
 #                                  The e2e job is skipped when this is not set.
-#
-# E2E_ADMIN_PASSWORD             - Password for the E2E admin user.
-#
-# E2E_VISITOR_PASSWORD           - Password for the E2E visitor user.
 #
 # Note: Enable branch protection in GitHub Settings > Branches to require
 # the "quality" status check to pass before merging.

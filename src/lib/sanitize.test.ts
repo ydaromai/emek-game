@@ -115,8 +115,8 @@ describe('escapeCSVField', () => {
     expect(escapeCSVField('@SUM(A1)')).toBe("'@SUM(A1)");
   });
 
-  it('neutralizes formula prefix tab with single quote', () => {
-    expect(escapeCSVField('\tdata')).toBe("'\tdata");
+  it('neutralizes formula prefix tab with single quote and wraps in quotes', () => {
+    expect(escapeCSVField('\tdata')).toBe("\"'\tdata\"");
   });
 
   it('neutralizes formula prefix carriage return with single quote', () => {
@@ -301,5 +301,18 @@ describe('validateBranding', () => {
     expect(result.errors).toContainEqual(
       expect.stringContaining('"font_family" must be a string')
     );
+  });
+
+  it('rejects font_family with CSS injection characters', () => {
+    const result = validateBranding({ ...validBranding, font_family: 'Rubik; } body { background: url(evil)' });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.stringContaining('font_family')
+    );
+  });
+
+  it('accepts font_family with quotes and commas (CSS font stack)', () => {
+    const result = validateBranding({ ...validBranding, font_family: "'Rubik', sans-serif" });
+    expect(result.valid).toBe(true);
   });
 });

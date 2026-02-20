@@ -80,7 +80,8 @@ export async function PATCH(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Branding update failed:', error.message);
+      return NextResponse.json({ error: 'Failed to update branding' }, { status: 500 });
     }
 
     return NextResponse.json({ branding: data.branding });

@@ -39,7 +39,13 @@ export async function POST(request: NextRequest) {
   }
   const tenantId = tenant.id;
 
-  const { answer } = await request.json();
+  let answer: string;
+  try {
+    const body = await request.json();
+    answer = body.answer;
+  } catch {
+    return NextResponse.json({ error: 'תשובה חסרה' }, { status: 400 });
+  }
   if (!answer || typeof answer !== 'string') {
     return NextResponse.json({ error: 'תשובה חסרה' }, { status: 400 });
   }
