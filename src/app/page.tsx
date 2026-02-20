@@ -3,9 +3,68 @@ import FloatingParticles from '@/components/FloatingParticles';
 import SectionDivider from '@/components/ui/SectionDivider';
 import TipBox from '@/components/ui/TipBox';
 import { getAllSiteContent } from '@/lib/site-content';
+import { getTenantSlug, getTenant } from '@/lib/tenant';
 
 export default async function HomePage() {
+  const tenantSlug = await getTenantSlug();
+  const tenant = tenantSlug ? await getTenant(tenantSlug) : null;
+
+  // Bare domain landing (no tenant)
+  if (!tenant) {
+    return (
+      <div className="bg-forest min-h-screen p-4">
+        <FloatingParticles />
+        <main className="flex flex-col items-center justify-center text-center max-w-lg mx-auto py-6">
+          <div className="space-y-6 relative z-10">
+            {/* Hero icon */}
+            <div className="animate-enter-1 flex justify-center">
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-5xl">
+                🌲
+              </div>
+            </div>
+
+            {/* Title */}
+            <div className="animate-enter-2">
+              <h1 className="text-4xl font-bold text-white leading-tight">
+                ברוכים הבאים לריאלייף
+              </h1>
+              <h2 className="text-xl text-white/80 mt-2">
+                Welcome to Realife
+              </h2>
+            </div>
+
+            <div className="glass-card p-5 animate-enter-3 text-right space-y-3">
+              <p className="text-lg text-white/90">
+                פלטפורמה למשחקי חינוך חוויתיים
+              </p>
+              <p className="text-base text-white/70">
+                צרו משחקים מותאמים אישית לארגון שלכם
+              </p>
+            </div>
+
+            <div className="animate-enter-4 space-y-3">
+              <Link
+                href="/login"
+                className="block btn-gradient w-full min-h-[44px] px-6 py-3 text-lg text-center transition-all duration-200 active:scale-[0.97]"
+              >
+                כניסה למערכת
+              </Link>
+              <Link
+                href="/register"
+                className="block w-full min-h-[44px] px-6 py-3 rounded-xl font-medium text-lg text-center border-2 border-white text-white bg-transparent hover:bg-white/5 active:bg-white/10 transition-all duration-200 active:scale-[0.97]"
+              >
+                הרשמה חדשה
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Tenant-specific landing
   const content = await getAllSiteContent();
+
   return (
     <div className="bg-forest min-h-screen p-4">
       <FloatingParticles />

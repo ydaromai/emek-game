@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import FloatingParticles from '@/components/FloatingParticles';
+import { useTenantOptional } from '@/components/TenantProvider';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const tenant = useTenantOptional();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -35,7 +37,12 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    router.push('/game');
+    // Redirect back to tenant login if on tenant subdomain
+    if (tenant) {
+      router.push('/login');
+    } else {
+      router.push('/login');
+    }
   };
 
   return (

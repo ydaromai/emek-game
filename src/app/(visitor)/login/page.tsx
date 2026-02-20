@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'motion/react';
 import { createClient } from '@/lib/supabase/client';
+import { useTenantOptional } from '@/components/TenantProvider';
 
 const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
 
@@ -21,6 +22,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const tenant = useTenantOptional();
   const rawRedirect = searchParams.get('redirect') || '/game';
   const redirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/game';
   const prefersReducedMotion = useReducedMotion();
@@ -44,6 +46,26 @@ function LoginForm() {
       setError('אימייל או סיסמה שגויים');
       setLoading(false);
       return;
+    }
+
+    // If on tenant subdomain, check if profile exists for this tenant
+    if (tenant) {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('tenant_id', tenant.id)
+          .single();
+
+        if (!profile) {
+          // User has auth account but no profile for this tenant
+          router.push('/complete-profile');
+          return;
+        }
+      }
     }
 
     router.push(redirect);
