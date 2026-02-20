@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'motion/react';
 import { createClient } from '@/lib/supabase/client';
+import { useTenantOptional } from '@/components/TenantProvider';
 
 const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
 
@@ -25,6 +26,7 @@ const inputFields: ReadonlyArray<{
 
 export default function RegisterPage() {
   const router = useRouter();
+  const tenant = useTenantOptional();
   const [form, setForm] = useState({ full_name: '', phone: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,21 +67,27 @@ export default function RegisterPage() {
     }
 
     if (data.user) {
-      // Create profile
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        full_name: form.full_name,
-        phone: form.phone,
-        email: form.email,
-      });
+      // Create profile only if we're on a tenant subdomain
+      if (tenant) {
+        const { error: profileError } = await supabase.from('profiles').insert({
+          user_id: data.user.id,
+          tenant_id: tenant.id,
+          full_name: form.full_name,
+          phone: form.phone,
+          email: form.email,
+        });
 
-      if (profileError) {
-        setError('שגיאה ביצירת הפרופיל. אנא נסו שוב.');
-        setLoading(false);
-        return;
+        if (profileError) {
+          setError('שגיאה ביצירת הפרופיל. אנא נסו שוב.');
+          setLoading(false);
+          return;
+        }
+
+        router.push('/game');
+      } else {
+        // Bare domain registration - just creating auth account
+        router.push('/login');
       }
-
-      router.push('/game');
     }
   };
 

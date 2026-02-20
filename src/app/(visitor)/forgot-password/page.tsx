@@ -4,8 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import FloatingParticles from '@/components/FloatingParticles';
+import { useTenantOptional } from '@/components/TenantProvider';
 
 export default function ForgotPasswordPage() {
+  const tenant = useTenantOptional();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -14,8 +16,14 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
     const supabase = createClient();
+
+    // Include tenant subdomain in redirect URL so user returns to correct tenant
+    const redirectUrl = tenant
+      ? `https://${tenant.slug}.${window.location.hostname}/reset-password`
+      : `${window.location.origin}/reset-password`;
+
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: redirectUrl,
     });
     setSent(true);
     setLoading(false);
