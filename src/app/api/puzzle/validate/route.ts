@@ -6,8 +6,17 @@ import { getTenant } from '@/lib/tenant';
 
 function generateRedemptionCode(length = 8): string {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // Excluded: 0, O, 1, I, L
-  const randomBytes = crypto.getRandomValues(new Uint8Array(length));
-  return Array.from(randomBytes, (byte) => chars[byte % chars.length]).join('');
+  const maxValid = 256 - (256 % chars.length); // Rejection sampling to eliminate modulo bias
+  const result: string[] = [];
+  while (result.length < length) {
+    const randomBytes = crypto.getRandomValues(new Uint8Array(length * 2));
+    for (const byte of randomBytes) {
+      if (byte < maxValid && result.length < length) {
+        result.push(chars[byte % chars.length]);
+      }
+    }
+  }
+  return result.join('');
 }
 
 export async function POST(request: NextRequest) {

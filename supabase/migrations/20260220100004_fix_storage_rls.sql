@@ -62,6 +62,9 @@ DROP POLICY IF EXISTS "Admin delete access for animal videos" ON storage.objects
 -- SECTION 2: CREATE NEW WRITE POLICIES — animal-images bucket
 -- =========================================================================
 
+-- Storage path format: {tenant_id}/{animal_id}/{timestamp}.{ext}
+-- The first folder in the path matches the user's tenant_id.
+
 CREATE POLICY "Tenant admin insert animal-images" ON storage.objects
   FOR INSERT WITH CHECK (
     bucket_id = 'animal-images' AND
@@ -69,6 +72,7 @@ CREATE POLICY "Tenant admin insert animal-images" ON storage.objects
       SELECT 1 FROM public.tenant_memberships
       WHERE user_id = auth.uid()
       AND role IN ('admin', 'staff')
+      AND tenant_id::text = (storage.foldername(name))[1]
     )
   );
 
@@ -79,6 +83,7 @@ CREATE POLICY "Tenant admin update animal-images" ON storage.objects
       SELECT 1 FROM public.tenant_memberships
       WHERE user_id = auth.uid()
       AND role IN ('admin', 'staff')
+      AND tenant_id::text = (storage.foldername(name))[1]
     )
   );
 
@@ -89,6 +94,7 @@ CREATE POLICY "Tenant admin delete animal-images" ON storage.objects
       SELECT 1 FROM public.tenant_memberships
       WHERE user_id = auth.uid()
       AND role IN ('admin', 'staff')
+      AND tenant_id::text = (storage.foldername(name))[1]
     )
   );
 
@@ -97,6 +103,8 @@ CREATE POLICY "Tenant admin delete animal-images" ON storage.objects
 -- SECTION 3: CREATE NEW WRITE POLICIES — animal-videos bucket
 -- =========================================================================
 
+-- Storage path format: {tenant_id}/{animal_id}/{timestamp}.{ext}
+
 CREATE POLICY "Tenant admin insert animal-videos" ON storage.objects
   FOR INSERT WITH CHECK (
     bucket_id = 'animal-videos' AND
@@ -104,6 +112,7 @@ CREATE POLICY "Tenant admin insert animal-videos" ON storage.objects
       SELECT 1 FROM public.tenant_memberships
       WHERE user_id = auth.uid()
       AND role IN ('admin', 'staff')
+      AND tenant_id::text = (storage.foldername(name))[1]
     )
   );
 
@@ -114,6 +123,7 @@ CREATE POLICY "Tenant admin update animal-videos" ON storage.objects
       SELECT 1 FROM public.tenant_memberships
       WHERE user_id = auth.uid()
       AND role IN ('admin', 'staff')
+      AND tenant_id::text = (storage.foldername(name))[1]
     )
   );
 
@@ -124,6 +134,7 @@ CREATE POLICY "Tenant admin delete animal-videos" ON storage.objects
       SELECT 1 FROM public.tenant_memberships
       WHERE user_id = auth.uid()
       AND role IN ('admin', 'staff')
+      AND tenant_id::text = (storage.foldername(name))[1]
     )
   );
 

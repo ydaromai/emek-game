@@ -73,11 +73,14 @@ const REQUIRED_COLOR_FIELDS = [
 
 const OPTIONAL_URL_FIELDS = ['logo_url', 'bg_image_url'] as const;
 
+const OPTIONAL_STRING_FIELDS = ['font_family'] as const;
+
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{3,8}$/;
 
 const ALLOWED_FIELDS = new Set<string>([
   ...REQUIRED_COLOR_FIELDS,
   ...OPTIONAL_URL_FIELDS,
+  ...OPTIONAL_STRING_FIELDS,
 ]);
 
 function isValidUrl(value: string): boolean {
@@ -134,6 +137,18 @@ export function validateBranding(branding: unknown): {
         errors.push(`Field "${field}" must be a string`);
       } else if (!isValidUrl(value)) {
         errors.push(`Field "${field}" must be a valid HTTP(S) URL, got: "${value}"`);
+      }
+    }
+  }
+
+  // Validate optional string fields (e.g. font_family)
+  for (const field of OPTIONAL_STRING_FIELDS) {
+    const value = obj[field];
+    if (value !== undefined && value !== null && value !== '') {
+      if (typeof value !== 'string') {
+        errors.push(`Field "${field}" must be a string`);
+      } else if (value.length > 200) {
+        errors.push(`Field "${field}" exceeds maximum length of 200 characters`);
       }
     }
   }

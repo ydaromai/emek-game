@@ -65,13 +65,30 @@ export async function POST(
     return NextResponse.json({ error: 'Missing file or type' }, { status: 400 });
   }
 
+  // MIME type and extension validation
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm'];
+  const ALLOWED_IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+  const ALLOWED_VIDEO_EXTS = ['mp4', 'webm'];
+
+  const allowedTypes = type === 'image' ? ALLOWED_IMAGE_TYPES : ALLOWED_VIDEO_TYPES;
+  const allowedExts = type === 'image' ? ALLOWED_IMAGE_EXTS : ALLOWED_VIDEO_EXTS;
+
+  if (!allowedTypes.includes(file.type)) {
+    return NextResponse.json({ error: 'Invalid file type' }, { status: 400 });
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (!ext || !allowedExts.includes(ext)) {
+    return NextResponse.json({ error: 'Invalid file extension' }, { status: 400 });
+  }
+
   const maxSize = type === 'image' ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE;
   if (file.size > maxSize) {
     return NextResponse.json({ error: `File too large (max ${maxSize / 1024 / 1024}MB)` }, { status: 400 });
   }
 
   const bucket = type === 'image' ? 'animal-images' : 'animal-videos';
-  const ext = file.name.split('.').pop();
   const path = `${tenantId}/${id}/${Date.now()}.${ext}`;
 
   const adminClient = createAdminClient();
