@@ -63,7 +63,7 @@ export default async function HomePage() {
   }
 
   // Tenant-specific landing
-  const content = await getAllSiteContent();
+  const content = await getAllSiteContent(tenant.id);
 
   return (
     <div className="bg-forest min-h-screen p-4">

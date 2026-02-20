@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { Tenant } from '@/types/database';
 
@@ -33,8 +34,6 @@ export const getTenant = cache(async (slug: string): Promise<Tenant | null> => {
 export async function getTenantOrNotFound(slug: string): Promise<Tenant> {
   const tenant = await getTenant(slug);
   if (!tenant) {
-    // Use Next.js redirect
-    const { redirect } = await import('next/navigation');
     redirect('/tenant-not-found');
   }
   return tenant;
