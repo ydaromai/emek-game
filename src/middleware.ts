@@ -1,57 +1,16 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-
-/** Production base domain (3 parts: realife.vercel.app) */
-const BASE_DOMAIN = 'realife.vercel.app';
-const BASE_DOMAIN_PARTS = BASE_DOMAIN.split('.').length; // 3
-
-/**
- * Extract tenant slug from the request host.
- *
- * Production: <slug>.realife.vercel.app  → slug
- *             realife.vercel.app          → null (bare domain)
- *             www.realife.vercel.app      → null (www = bare)
- *
- * Local dev (localhost / 127.0.0.1):
- *   1. x-tenant-slug header (set by dev proxy or tests)
- *   2. ?tenant=slug query param
- *   3. null (bare domain)
- */
-function extractTenantSlug(request: NextRequest): string | null {
-  const host = request.headers.get('host') ?? '';
-  const hostname = host.split(':')[0]; // strip port
-
-  // Local development
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    // 1. Check x-tenant-slug header (dev proxy / tests)
-    const headerSlug = request.headers.get('x-tenant-slug');
-    if (headerSlug) return headerSlug;
-
-    // 2. Check ?tenant= query param
-    const querySlug = request.nextUrl.searchParams.get('tenant');
-    if (querySlug) return querySlug;
-
-    return null;
-  }
-
-  // Production / preview deployments
-  const parts = hostname.split('.');
-  if (parts.length > BASE_DOMAIN_PARTS) {
-    const subdomain = parts[0];
-    // www is not a tenant
-    if (subdomain === 'www') return null;
-    return subdomain;
-  }
-
-  // Bare domain — no tenant
-  return null;
-}
+import { extractTenantSlug } from '@/lib/tenant-slug';
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   // ── 1. Tenant resolution ──────────────────────────────────────────
-  const tenantSlug = extractTenantSlug(request);
+  const tenantSlug = extractTenantSlug(
+    request.headers.get('host') ?? '',
+    request.headers.get('x-tenant-slug'),
+    request.nextUrl.searchParams.get('tenant'),
+  );
 
   // Set pathname header for server components to detect current route
   request.headers.set('x-next-pathname', request.nextUrl.pathname);
