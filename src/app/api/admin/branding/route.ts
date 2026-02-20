@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getTenant } from '@/lib/tenant';
+import { validateBranding } from '@/lib/sanitize';
 import type { Tenant } from '@/types/database';
 
 async function verifyAdminAndGetTenant() {
@@ -59,6 +60,15 @@ export async function PATCH(request: Request) {
 
     if (!branding || typeof branding !== 'object') {
       return NextResponse.json({ error: 'Invalid branding data' }, { status: 400 });
+    }
+
+    // Strict schema validation
+    const validation = validateBranding(branding);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: 'Invalid branding data', details: validation.errors },
+        { status: 400 }
+      );
     }
 
     const adminClient = createAdminClient();
