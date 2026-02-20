@@ -4,13 +4,10 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getTenant } from '@/lib/tenant';
 
-function generateRedemptionCode(): string {
+function generateRedemptionCode(length = 8): string {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // Excluded: 0, O, 1, I, L
-  let code = '';
-  for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+  const randomBytes = crypto.getRandomValues(new Uint8Array(length));
+  return Array.from(randomBytes, (byte) => chars[byte % chars.length]).join('');
 }
 
 export async function POST(request: NextRequest) {
