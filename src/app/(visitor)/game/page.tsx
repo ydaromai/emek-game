@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { fireConfetti } from '@/components/Confetti';
 import SectionDivider from '@/components/ui/SectionDivider';
 import TipBox from '@/components/ui/TipBox';
+import { useTenant } from '@/components/TenantProvider';
 
 const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
 
@@ -35,6 +36,8 @@ const ANIMAL_EMOJI: Record<string, string> = {
 
 export default function GamePage() {
   const router = useRouter();
+  const tenant = useTenant();
+  const tenantId = tenant.id;
   const [slots, setSlots] = useState<SlotData[]>([]);
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
@@ -50,36 +53,40 @@ export default function GamePage() {
 
   useEffect(() => {
     loadProgress();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId]);
 
   async function loadProgress() {
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { router.push('/login?redirect=/game'); return; }
 
-    // Check if already completed
+    // Check if already completed (tenant-scoped profile)
     const { data: profile } = await supabase
       .from('profiles')
       .select('completion_status')
-      .eq('id', session.user.id)
+      .eq('user_id', session.user.id)
+      .eq('tenant_id', tenantId)
       .single();
 
     if (profile?.completion_status === 'completed') {
       setCompleted(true);
     }
 
-    // Get active animals
+    // Get active animals for this tenant
     const { data: animals } = await supabase
       .from('animals')
       .select('id, letter, order_index, name_he')
+      .eq('tenant_id', tenantId)
       .eq('is_active', true)
       .order('order_index');
 
-    // Get user progress
+    // Get user progress for this tenant
     const { data: progress } = await supabase
       .from('user_progress')
       .select('animal_id, letter')
-      .eq('user_id', session.user.id);
+      .eq('user_id', session.user.id)
+      .eq('tenant_id', tenantId);
 
     const progressMap = new Map(progress?.map((p) => [p.animal_id, p.letter]) || []);
 
@@ -226,7 +233,7 @@ export default function GamePage() {
               </button>
               <p className="text-sm text-muted-fg text-center">
                 {collectedCount === 0
-                  ? 'גשו לאחת מ-10 התחנות בפארק וסרקו את קוד ה-QR'
+                  ? `גשו לאחת מ-${totalSlots} התחנות בפארק וסרקו את קוד ה-QR`
                   : `נשארו עוד ${totalSlots - collectedCount} תחנות — המשיכו לסרוק!`}
               </p>
               <TipBox icon="🔭">טיפ: חפשו את תחנות ה-QR ליד שילוט המעיינות והשבילים המסומנים</TipBox>
