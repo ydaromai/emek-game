@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { resolveTenant } from '@/lib/tenant';
 import FloatingParticles from '@/components/FloatingParticles';
 
 interface Props {
@@ -24,18 +25,22 @@ export default async function ScanPage({ params }: Props) {
   }
 
   const supabase = await createClient();
+  const tenant = await resolveTenant();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
     redirect(`/login?redirect=/scan/${token}`);
   }
 
-  // Look up animal by QR token
-  const { data: animal } = await supabase
+  // Look up animal by QR token scoped to current tenant
+  const query = supabase
     .from('animals')
     .select('*')
-    .eq('qr_token', token)
-    .single();
+    .eq('qr_token', token);
+  if (tenant) {
+    query.eq('tenant_id', tenant.id);
+  }
+  const { data: animal } = await query.single();
 
   if (!animal) {
     return (
@@ -61,12 +66,15 @@ export default async function ScanPage({ params }: Props) {
     );
   }
 
+  const tenantId = tenant?.id ?? animal.tenant_id;
+
   // Check if the user has already scanned this animal
   const { data: existingProgress } = await supabase
     .from('user_progress')
     .select('id')
     .eq('user_id', session.user.id)
     .eq('animal_id', animal.id)
+    .eq('tenant_id', tenantId)
     .maybeSingle();
 
   const isFirstVisit = !existingProgress;
@@ -76,6 +84,7 @@ export default async function ScanPage({ params }: Props) {
     {
       user_id: session.user.id,
       animal_id: animal.id,
+      tenant_id: tenantId,
       letter: animal.letter,
     },
     { onConflict: 'user_id,animal_id', ignoreDuplicates: true }

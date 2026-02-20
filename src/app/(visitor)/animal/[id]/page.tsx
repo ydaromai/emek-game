@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireAuth } from '@/lib/auth';
+import { resolveTenant } from '@/lib/tenant';
 import ProgressBar from '@/components/ui/ProgressBar';
 import LetterReveal from '@/components/LetterReveal';
 import FloatingParticles from '@/components/FloatingParticles';
@@ -20,30 +21,39 @@ export default async function AnimalPage({ params, searchParams }: Props) {
   const isNew = resolvedSearchParams.new === 'true';
   const session = await requireAuth(`/animal/${id}`);
   const supabase = await createClient();
+  const tenant = await resolveTenant();
 
-  const { data: animal } = await supabase
+  // Fetch animal — scoped to tenant if available (security: verify belongs to tenant)
+  const animalQuery = supabase
     .from('animals')
     .select('*')
-    .eq('id', id)
-    .single();
+    .eq('id', id);
+  if (tenant) {
+    animalQuery.eq('tenant_id', tenant.id);
+  }
+  const { data: animal } = await animalQuery.single();
 
   if (!animal) {
     redirect('/game');
   }
 
-  // Get user progress
+  const tenantId = tenant?.id ?? animal.tenant_id;
+
+  // Get user progress scoped to tenant
   const { data: progress } = await supabase
     .from('user_progress')
     .select('animal_id')
-    .eq('user_id', session.user.id);
+    .eq('user_id', session.user.id)
+    .eq('tenant_id', tenantId);
 
   const { count: totalActive } = await supabase
     .from('animals')
     .select('*', { count: 'exact', head: true })
+    .eq('tenant_id', tenantId)
     .eq('is_active', true);
 
   const scannedCount = progress?.length || 0;
-  const total = totalActive || 10;
+  const total = totalActive || 0;
 
   // Build facts array for the carousel
   const facts: { icon: string; title: string; text: string }[] = [];
