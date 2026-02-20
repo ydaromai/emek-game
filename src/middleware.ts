@@ -108,17 +108,27 @@ export async function middleware(request: NextRequest) {
 
   // ── 4. Route protection ───────────────────────────────────────────
 
+  // Helper: build redirect URL preserving ?tenant= for local dev
+  function buildRedirect(targetPath: string): URL {
+    const url = new URL(targetPath, request.url);
+    const tenantParam = request.nextUrl.searchParams.get('tenant');
+    if (tenantParam) {
+      url.searchParams.set('tenant', tenantParam);
+    }
+    return url;
+  }
+
   // Protect visitor game routes
   const protectedVisitorRoutes = ['/game', '/animal', '/redeem'];
   if (protectedVisitorRoutes.some((r) => pathname.startsWith(r)) && !session) {
-    return NextResponse.redirect(
-      new URL(`/login?redirect=${encodeURIComponent(pathname)}`, request.url)
-    );
+    const loginUrl = buildRedirect('/login');
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Protect admin routes (except admin login)
   if (pathname.startsWith('/admin') && pathname !== '/admin/login' && !session) {
-    return NextResponse.redirect(new URL('/admin/login', request.url));
+    return NextResponse.redirect(buildRedirect('/admin/login'));
   }
 
   // Protect super-admin routes (except super-admin login)
@@ -127,7 +137,7 @@ export async function middleware(request: NextRequest) {
     pathname !== '/super-admin/login' &&
     !session
   ) {
-    return NextResponse.redirect(new URL('/super-admin/login', request.url));
+    return NextResponse.redirect(buildRedirect('/super-admin/login'));
   }
 
   // ── 5. Return response with tenant header ─────────────────────────
@@ -136,11 +146,17 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',
+    '/login',
+    '/register',
+    '/complete-profile',
+    '/forgot-password',
     '/game/:path*',
     '/animal/:path*',
     '/redeem/:path*',
     '/admin/:path*',
     '/scan/:path*',
     '/super-admin/:path*',
+    '/api/:path*',
   ],
 };

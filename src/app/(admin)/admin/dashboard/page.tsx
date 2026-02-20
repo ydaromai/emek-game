@@ -23,7 +23,8 @@ export default function AdminDashboardPage() {
 
   if (!data) return <p className="text-center py-10 text-deep-green/50">טוען...</p>;
 
-  const maxCount = Math.max(...data.distribution.map((d) => d.count), 1);
+  const distribution = data.distribution || [];
+  const maxCount = Math.max(...distribution.map((d) => d.count), 1);
 
   return (
     <div className="space-y-6">
@@ -47,7 +48,7 @@ export default function AdminDashboardPage() {
       <Card>
         <h2 className="text-lg font-semibold text-deep-green mb-4">התפלגות סריקות לפי תחנה</h2>
         <div className="space-y-2">
-          {data.distribution.map((d) => (
+          {distribution.map((d) => (
             <div key={d.order} className="flex items-center gap-3">
               <span className="w-20 text-sm text-deep-green/70 truncate">{d.name}</span>
               <div className="flex-1 h-6 bg-deep-green/10 rounded-full overflow-hidden">

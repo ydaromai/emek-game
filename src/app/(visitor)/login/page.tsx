@@ -68,7 +68,12 @@ function LoginForm() {
       }
     }
 
-    router.push(redirect);
+    // Preserve ?tenant= query param for local dev (production uses subdomains)
+    const tenantSlug = searchParams.get('tenant');
+    const redirectUrl = tenantSlug
+      ? `${redirect}${redirect.includes('?') ? '&' : '?'}tenant=${tenantSlug}`
+      : redirect;
+    router.push(redirectUrl);
   };
 
   return (

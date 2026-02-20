@@ -26,8 +26,8 @@ BEGIN;
 -- The old is_admin() and is_admin_or_staff() check profiles.role which is
 -- deprecated in favour of tenant_memberships.role.
 
-DROP FUNCTION IF EXISTS public.is_admin();
-DROP FUNCTION IF EXISTS public.is_admin_or_staff();
+DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
+DROP FUNCTION IF EXISTS public.is_admin_or_staff() CASCADE;
 
 
 -- ============================================================================

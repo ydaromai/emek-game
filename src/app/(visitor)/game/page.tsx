@@ -116,7 +116,10 @@ export default function GamePage() {
 
     const res = await fetch('/api/puzzle/validate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-tenant-slug': tenant.slug,
+      },
       body: JSON.stringify({ answer }),
     });
 

@@ -32,9 +32,30 @@ export default function AdminLoginPage() {
       return;
     }
 
-    // After successful auth, redirect to dashboard.
-    // The server layout will verify tenant membership on the next render.
-    // If the user has no membership for this tenant, requireAdmin() will redirect back.
+    // Check if user has admin/staff role before redirecting
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: memberships } = await supabase
+        .from('tenant_memberships')
+        .select('role')
+        .eq('user_id', user.id)
+        .in('role', ['admin', 'staff']);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_super_admin')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+
+      if ((!memberships || memberships.length === 0) && !profile?.is_super_admin) {
+        await supabase.auth.signOut();
+        setError('אין לך הרשאות גישה לממשק הניהול');
+        setLoading(false);
+        return;
+      }
+    }
+
     router.push('/admin/dashboard');
   };
 

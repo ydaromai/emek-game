@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'motion/react';
 import { createClient } from '@/lib/supabase/client';
@@ -26,6 +26,7 @@ const inputFields: ReadonlyArray<{
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const tenant = useTenantOptional();
   const [form, setForm] = useState({ full_name: '', phone: '', email: '', password: '' });
   const [error, setError] = useState('');
@@ -83,7 +84,10 @@ export default function RegisterPage() {
           return;
         }
 
-        router.push('/game');
+        // Preserve ?tenant= query param for local dev
+        const tenantSlug = searchParams.get('tenant');
+        const gameUrl = tenantSlug ? `/game?tenant=${tenantSlug}` : '/game';
+        router.push(gameUrl);
       } else {
         // Bare domain registration - just creating auth account
         router.push('/login');

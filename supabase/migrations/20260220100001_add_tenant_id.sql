@@ -119,8 +119,10 @@ ALTER TABLE public.user_progress ALTER COLUMN tenant_id SET NOT NULL;
 ALTER TABLE public.redemptions ALTER COLUMN tenant_id SET NOT NULL;
 ALTER TABLE public.site_content ALTER COLUMN tenant_id SET NOT NULL;
 
--- Drop legacy column — no longer needed
-ALTER TABLE public.profiles DROP COLUMN IF EXISTS legacy_auth_id;
+-- Drop legacy column — CASCADE drops dependent RLS policies that still
+-- reference the old "id" column (renamed to legacy_auth_id above).
+-- These policies are replaced by the next migration (20260220100002).
+ALTER TABLE public.profiles DROP COLUMN IF EXISTS legacy_auth_id CASCADE;
 
 -- profiles.role is superseded by tenant_memberships.role but kept for backward compat
 ALTER TABLE public.profiles ALTER COLUMN role SET DEFAULT 'visitor';
