@@ -100,7 +100,8 @@ export async function deleteTestTenant(tenantId: string) {
 
 export async function createTestUser(suffix: string, tenantId?: string): Promise<TestUser> {
   const email = `e2e-${suffix}-${Date.now()}@parktest.co.il`;
-  const password = 'Test1234pass';
+  const password = process.env.E2E_VISITOR_PASSWORD;
+  if (!password) throw new Error('E2E_VISITOR_PASSWORD env var not set — cannot create test users');
 
   // Resolve tenant ID if not provided
   if (!tenantId) {
