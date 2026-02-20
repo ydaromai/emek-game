@@ -19,7 +19,7 @@ export default async function AnimalPage({ params, searchParams }: Props) {
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
   const isNew = resolvedSearchParams.new === 'true';
-  const session = await requireAuth(`/animal/${id}`);
+  const user = await requireAuth(`/animal/${id}`);
   const supabase = await createClient();
   const tenant = await resolveTenant();
 
@@ -43,7 +43,7 @@ export default async function AnimalPage({ params, searchParams }: Props) {
   const { data: progress } = await supabase
     .from('user_progress')
     .select('animal_id')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('tenant_id', tenantId);
 
   const { count: totalActive } = await supabase

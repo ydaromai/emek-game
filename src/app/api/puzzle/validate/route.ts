@@ -15,9 +15,9 @@ function generateRedemptionCode(): string {
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'לא מחוברים' }, { status: 401 });
   }
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   const { data: existingRedemption } = await supabase
     .from('redemptions')
     .select('redemption_code')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('tenant_id', tenantId)
     .single();
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
   const redemptionCode = generateRedemptionCode();
 
   await adminClient.from('redemptions').insert({
-    user_id: session.user.id,
+    user_id: user.id,
     tenant_id: tenantId,
     redemption_code: redemptionCode,
   });
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       completion_status: 'completed',
       completed_at: new Date().toISOString(),
     })
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('tenant_id', tenantId);
 
   return NextResponse.json({

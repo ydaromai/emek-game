@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/auth';
 import { resolveTenant } from '@/lib/tenant';
 import FloatingParticles from '@/components/FloatingParticles';
 
@@ -26,9 +27,9 @@ export default async function ScanPage({ params }: Props) {
 
   const supabase = await createClient();
   const tenant = await resolveTenant();
-  const { data: { session } } = await supabase.auth.getSession();
+  const user = await getAuthUser();
 
-  if (!session) {
+  if (!user) {
     redirect(`/login?redirect=/scan/${token}`);
   }
 
@@ -72,7 +73,7 @@ export default async function ScanPage({ params }: Props) {
   const { data: existingProgress } = await supabase
     .from('user_progress')
     .select('id')
-    .eq('user_id', session.user.id)
+    .eq('user_id', user.id)
     .eq('animal_id', animal.id)
     .eq('tenant_id', tenantId)
     .maybeSingle();
@@ -82,7 +83,7 @@ export default async function ScanPage({ params }: Props) {
   // Record scan (upsert — ON CONFLICT DO NOTHING)
   await supabase.from('user_progress').upsert(
     {
-      user_id: session.user.id,
+      user_id: user.id,
       animal_id: animal.id,
       tenant_id: tenantId,
       letter: animal.letter,
