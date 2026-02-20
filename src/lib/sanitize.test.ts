@@ -275,4 +275,31 @@ describe('validateBranding', () => {
       expect.stringContaining('"primary" must be a string')
     );
   });
+
+  // font_family validation
+  it('accepts valid font_family', () => {
+    const result = validateBranding({ ...validBranding, font_family: 'Rubik' });
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts null font_family', () => {
+    const result = validateBranding({ ...validBranding, font_family: null });
+    expect(result.valid).toBe(true);
+  });
+
+  it('rejects font_family exceeding 200 characters', () => {
+    const result = validateBranding({ ...validBranding, font_family: 'A'.repeat(201) });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.stringContaining('font_family')
+    );
+  });
+
+  it('rejects non-string font_family', () => {
+    const result = validateBranding({ ...validBranding, font_family: 123 });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.stringContaining('"font_family" must be a string')
+    );
+  });
 });

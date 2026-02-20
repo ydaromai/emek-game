@@ -82,7 +82,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (contact_email !== undefined) updates.contact_email = contact_email;
     if (is_active !== undefined) updates.is_active = is_active;
     if (branding !== undefined) {
-      if (branding !== null && typeof branding === 'object') {
+      if (branding !== null) {
+        if (typeof branding !== 'object' || Array.isArray(branding)) {
+          return NextResponse.json(
+            { error: 'Branding must be an object or null' },
+            { status: 400 }
+          );
+        }
         const validation = validateBranding(branding);
         if (!validation.valid) {
           return NextResponse.json(
