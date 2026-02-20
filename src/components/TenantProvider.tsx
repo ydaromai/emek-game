@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
-import type { Tenant, TenantBranding } from '@/types/database';
+import type { TenantBranding } from '@/types/database';
 
 interface TenantContextValue {
   id: string;

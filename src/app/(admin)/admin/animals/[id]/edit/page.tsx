@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useTenant } from '@/components/TenantProvider';
@@ -49,11 +49,7 @@ export default function EditAnimalPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadAnimal();
-  }, []);
-
-  async function loadAnimal() {
+  const loadAnimal = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase
       .from('animals')
@@ -78,7 +74,12 @@ export default function EditAnimalPage() {
       return;
     }
     setLoading(false);
-  }
+  }, [id, tenant.id, router]);
+
+  useEffect(() => {
+     
+    loadAnimal();
+  }, [loadAnimal]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

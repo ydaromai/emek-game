@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import Card from '@/components/ui/Card';
-import Button from '@/components/ui/Button';
 import { useTenant } from '@/components/TenantProvider';
 
 interface AnimalRow {
@@ -21,9 +20,7 @@ export default function AdminAnimalsPage() {
   const [animals, setAnimals] = useState<AnimalRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadAnimals(); }, [tenantId]);
-
-  async function loadAnimals() {
+  const loadAnimals = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase
       .from('animals')
@@ -32,7 +29,12 @@ export default function AdminAnimalsPage() {
       .order('order_index');
     setAnimals(data || []);
     setLoading(false);
-  }
+  }, [tenantId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching effect, setState is async after await
+    loadAnimals();
+  }, [loadAnimals]);
 
   async function toggleActive(id: string, current: boolean) {
     const supabase = createClient();

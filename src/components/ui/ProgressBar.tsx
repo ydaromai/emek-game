@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-
 interface ProgressBarProps {
   current: number;
   total: number;
@@ -12,18 +10,6 @@ interface ProgressBarProps {
 export default function ProgressBar({ current, total, label, pulse }: ProgressBarProps) {
   const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
 
-  // Key-flip pattern: when pulse fires, bump the key to remount the bar
-  // and re-trigger the fill animation, giving visual feedback for progress change.
-  const [pulseKey, setPulseKey] = useState(0);
-  const prevCurrent = useRef(current);
-
-  useEffect(() => {
-    if (pulse && current !== prevCurrent.current) {
-      setPulseKey((k) => k + 1);
-      prevCurrent.current = current;
-    }
-  }, [current, pulse]);
-
   return (
     <div className="w-full">
       {label && (
@@ -33,10 +19,10 @@ export default function ProgressBar({ current, total, label, pulse }: ProgressBa
         </div>
       )}
       <div
-        className={`w-full h-3 bg-deep-green/10 rounded-full overflow-hidden ${pulse && pulseKey > 0 ? 'animate-pulse-once' : ''}`}
+        className={`w-full h-3 bg-deep-green/10 rounded-full overflow-hidden ${pulse ? 'animate-pulse-once' : ''}`}
       >
         <div
-          key={pulseKey}
+          key={pulse ? current : 0}
           className="h-full w-full bg-turquoise rounded-full animate-fill-bar progress-shimmer"
           style={{
             '--fill-target': `${percentage / 100}`,

@@ -26,7 +26,6 @@ export default function AdminStaffPage() {
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
   const loadStaff = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await fetch('/api/admin/staff', {
         headers: { 'x-tenant-slug': slug },
@@ -42,6 +41,7 @@ export default function AdminStaffPage() {
   }, [slug]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching effect, setState is async after await
     loadStaff();
   }, [loadStaff]);
 

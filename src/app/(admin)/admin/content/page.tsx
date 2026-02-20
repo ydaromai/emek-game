@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -26,11 +26,7 @@ export default function AdminContentPage() {
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
   const [feedback, setFeedback] = useState<Record<string, RowFeedback>>({});
 
-  useEffect(() => {
-    loadContent();
-  }, [tenantId]);
-
-  async function loadContent() {
+  const loadContent = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase
       .from('site_content')
@@ -44,7 +40,12 @@ export default function AdminContentPage() {
     });
     setEditedValues(initial);
     setLoading(false);
-  }
+  }, [tenantId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetching effect, setState is async after await
+    loadContent();
+  }, [loadContent]);
 
   async function handleSave(row: SiteContentRow) {
     const content_value = editedValues[row.id];
