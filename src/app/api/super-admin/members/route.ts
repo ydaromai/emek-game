@@ -125,7 +125,7 @@ export async function POST(request: Request) {
       userId = existingUser.id;
     } else {
       // Create user with temp password
-      const tempPassword = `Temp${Math.random().toString(36).slice(2, 10)}!${Date.now()}`;
+      const tempPassword = `Temp${crypto.randomUUID().slice(0, 8)}!${Date.now()}`;
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email,
         password: tempPassword,
