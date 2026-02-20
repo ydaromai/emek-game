@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useTenant } from '@/components/TenantProvider';
 import SectionDivider from '@/components/ui/SectionDivider';
 
 const FloatingParticles = dynamic(() => import('@/components/FloatingParticles'), { ssr: false });
@@ -18,12 +19,15 @@ const SPARKLES = [
 
 export default function RedeemPage() {
   const router = useRouter();
+  const tenant = useTenant();
+  const tenantId = tenant.id;
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadRedemption();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId]);
 
   async function loadRedemption() {
     const supabase = createClient();
@@ -38,6 +42,7 @@ export default function RedeemPage() {
       .from('redemptions')
       .select('redemption_code')
       .eq('user_id', session.user.id)
+      .eq('tenant_id', tenantId)
       .single();
 
     if (!redemption) {
