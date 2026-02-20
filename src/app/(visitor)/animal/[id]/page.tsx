@@ -23,33 +23,42 @@ export default async function AnimalPage({ params, searchParams }: Props) {
   const supabase = await createClient();
   const tenant = await resolveTenant();
 
-  // Fetch animal — scoped to tenant if available (security: verify belongs to tenant)
-  const animalQuery = supabase
+  // Tenant context is required — reject if missing
+  if (!tenant) {
+    return (
+      <div className="bg-forest min-h-screen flex items-center justify-center p-4">
+        <FloatingParticles />
+        <div className="glass-card p-5 text-center space-y-3 relative z-10">
+          <h1 className="text-2xl font-bold text-error">שגיאת גישה</h1>
+          <p className="text-deep-green/70">אנא גש דרך כתובת הפארק</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Fetch animal — always scoped to tenant (security: verify belongs to tenant)
+  const { data: animal } = await supabase
     .from('animals')
     .select('*')
-    .eq('id', id);
-  if (tenant) {
-    animalQuery.eq('tenant_id', tenant.id);
-  }
-  const { data: animal } = await animalQuery.single();
+    .eq('id', id)
+    .eq('tenant_id', tenant.id)
+    .single();
 
   if (!animal) {
     redirect('/game');
   }
-
-  const tenantId = tenant?.id ?? animal.tenant_id;
 
   // Get user progress scoped to tenant
   const { data: progress } = await supabase
     .from('user_progress')
     .select('animal_id')
     .eq('user_id', session.user.id)
-    .eq('tenant_id', tenantId);
+    .eq('tenant_id', tenant.id);
 
   const { count: totalActive } = await supabase
     .from('animals')
     .select('*', { count: 'exact', head: true })
-    .eq('tenant_id', tenantId)
+    .eq('tenant_id', tenant.id)
     .eq('is_active', true);
 
   const scannedCount = progress?.length || 0;

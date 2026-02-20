@@ -26,29 +26,41 @@ export default async function ScanPage({ params }: Props) {
 
   const supabase = await createClient();
   const tenant = await resolveTenant();
+
+  // Tenant context is required — reject if missing
+  if (!tenant) {
+    return (
+      <div className="bg-forest min-h-screen flex items-center justify-center p-4">
+        <FloatingParticles />
+        <div className="glass-card p-5 text-center space-y-3 relative z-10">
+          <h1 className="text-2xl font-bold text-error">שגיאת גישה</h1>
+          <p className="text-deep-green/70">אנא גש דרך כתובת הפארק</p>
+        </div>
+      </div>
+    );
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
     redirect(`/login?redirect=/scan/${token}`);
   }
 
-  // Look up animal by QR token scoped to current tenant
-  const query = supabase
+  // Look up animal by QR token — always scoped to current tenant
+  const { data: animal } = await supabase
     .from('animals')
     .select('*')
-    .eq('qr_token', token);
-  if (tenant) {
-    query.eq('tenant_id', tenant.id);
-  }
-  const { data: animal } = await query.single();
+    .eq('qr_token', token)
+    .eq('tenant_id', tenant.id)
+    .single();
 
   if (!animal) {
     return (
       <div className="bg-forest min-h-screen flex items-center justify-center p-4">
         <FloatingParticles />
         <div className="glass-card p-5 text-center space-y-3 relative z-10">
-          <h1 className="text-2xl font-bold text-error">תחנה לא נמצאה</h1>
-          <p className="text-deep-green/70">הקוד שסרקתם אינו מקושר לתחנה. אנא נסו שוב.</p>
+          <h1 className="text-2xl font-bold text-error">תחנה לא נמצאה בפארק זה</h1>
+          <p className="text-deep-green/70">הקוד שסרקתם אינו מקושר לתחנה בפארק זה. אנא נסו שוב.</p>
         </div>
       </div>
     );
@@ -66,15 +78,13 @@ export default async function ScanPage({ params }: Props) {
     );
   }
 
-  const tenantId = tenant?.id ?? animal.tenant_id;
-
   // Check if the user has already scanned this animal
   const { data: existingProgress } = await supabase
     .from('user_progress')
     .select('id')
     .eq('user_id', session.user.id)
     .eq('animal_id', animal.id)
-    .eq('tenant_id', tenantId)
+    .eq('tenant_id', tenant.id)
     .maybeSingle();
 
   const isFirstVisit = !existingProgress;
@@ -84,7 +94,7 @@ export default async function ScanPage({ params }: Props) {
     {
       user_id: session.user.id,
       animal_id: animal.id,
-      tenant_id: tenantId,
+      tenant_id: tenant.id,
       letter: animal.letter,
     },
     { onConflict: 'user_id,animal_id', ignoreDuplicates: true }
