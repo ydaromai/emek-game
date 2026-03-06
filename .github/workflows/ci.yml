@@ -36,6 +36,10 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.github/**/*.md'
 
 jobs:
   # -- Quality gate: lint, unit tests, production build -----------------------
